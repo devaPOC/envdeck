@@ -13,7 +13,9 @@ export interface Server {
 interface ServerState {
   servers: Server[]
   activeServerId: string | null
+  setServers: (servers: Server[]) => void
   addServer: (server: Server) => void
+  updateServer: (serverId: string, updates: Partial<Omit<Server, 'id'>>) => void
   removeServer: (serverId: string) => void
   setStatus: (serverId: string, status: ConnectionStatus) => void
   setActiveServer: (serverId: string | null) => void
@@ -22,9 +24,17 @@ interface ServerState {
 export const useServerStore = create<ServerState>((set) => ({
   servers: [],
   activeServerId: null,
+  setServers: (servers) => set({ servers }),
   addServer: (server) => set((state) => ({ servers: [...state.servers, server] })),
+  updateServer: (serverId, updates) =>
+    set((state) => ({
+      servers: state.servers.map((s) => (s.id === serverId ? { ...s, ...updates } : s))
+    })),
   removeServer: (serverId) =>
-    set((state) => ({ servers: state.servers.filter((s) => s.id !== serverId) })),
+    set((state) => ({
+      servers: state.servers.filter((s) => s.id !== serverId),
+      activeServerId: state.activeServerId === serverId ? null : state.activeServerId
+    })),
   setStatus: (serverId, status) =>
     set((state) => ({
       servers: state.servers.map((s) => (s.id === serverId ? { ...s, status } : s))
