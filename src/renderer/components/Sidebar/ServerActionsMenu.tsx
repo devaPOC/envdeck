@@ -1,5 +1,6 @@
 import { Pencil, Plug, Trash2, Unplug } from 'lucide-react'
 import type { Server } from '../../store/serverStore'
+import { AnimatedDots } from '../AnimatedDots'
 
 interface ServerActionsMenuProps {
   server: Server
@@ -18,7 +19,8 @@ export function ServerActionsMenu({
   onDelete,
   onClose
 }: ServerActionsMenuProps): JSX.Element {
-  const isLive = server.status === 'connected' || server.status === 'connecting'
+  const isConnecting = server.status === 'connecting'
+  const isConnected = server.status === 'connected'
 
   return (
     <>
@@ -26,17 +28,31 @@ export function ServerActionsMenu({
       <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-md border border-neutral-800 bg-neutral-900 py-1 shadow-lg">
         <button
           onClick={() => {
-            if (isLive) {
+            if (isConnected) {
               onDisconnect()
             } else {
               onConnect()
             }
             onClose()
           }}
-          className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-neutral-200 hover:bg-neutral-800"
+          disabled={isConnecting}
+          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm ${
+            isConnecting
+              ? 'cursor-not-allowed text-neutral-500'
+              : 'text-neutral-200 hover:bg-neutral-800'
+          }`}
         >
-          {isLive ? <Unplug size={14} /> : <Plug size={14} />}
-          {isLive ? 'Disconnect' : 'Connect'}
+          {isConnecting ? <Plug size={14} /> : isConnected ? <Unplug size={14} /> : <Plug size={14} />}
+          {isConnecting ? (
+            <span className="flex items-center gap-1">
+              Connecting
+              <AnimatedDots />
+            </span>
+          ) : isConnected ? (
+            'Disconnect'
+          ) : (
+            'Connect'
+          )}
         </button>
 
         <div className="my-1 border-t border-neutral-800" />
