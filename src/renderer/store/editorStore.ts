@@ -6,6 +6,7 @@ export interface OpenFile {
   remotePath: string
   content: string
   isDirty: boolean
+  saveError?: string
 }
 
 interface EditorState {
@@ -15,6 +16,8 @@ interface EditorState {
   closeFile: (fileId: string) => void
   updateFileContent: (fileId: string, content: string) => void
   setActiveFile: (fileId: string | null) => void
+  markSaved: (fileId: string) => void
+  setSaveError: (fileId: string, message: string | undefined) => void
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -38,5 +41,15 @@ export const useEditorStore = create<EditorState>((set) => ({
         f.id === fileId ? { ...f, content, isDirty: true } : f
       )
     })),
-  setActiveFile: (fileId) => set({ activeFileId: fileId })
+  setActiveFile: (fileId) => set({ activeFileId: fileId }),
+  markSaved: (fileId) =>
+    set((state) => ({
+      openFiles: state.openFiles.map((f) =>
+        f.id === fileId ? { ...f, isDirty: false, saveError: undefined } : f
+      )
+    })),
+  setSaveError: (fileId, message) =>
+    set((state) => ({
+      openFiles: state.openFiles.map((f) => (f.id === fileId ? { ...f, saveError: message } : f))
+    }))
 }))

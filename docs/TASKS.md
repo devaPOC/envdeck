@@ -82,17 +82,18 @@
 
 > Open, edit, and save files on the remote server.
 
-- [ ] `4.1` IPC handler: `sftp:readfile` — takes a path, returns file content as string
-- [ ] `4.2` IPC handler: `sftp:writefile` — takes path + content, writes to remote server
-- [ ] `4.3` Integrate Monaco Editor in main panel
-- [ ] `4.4` Auto-detect language from file extension (`.env`, `.js`, `.json`, `.sh`, etc.)
-- [ ] `4.5` Tab system — multiple files open at once, click to switch
-- [ ] `4.6` Unsaved changes indicator (dot on tab)
-- [ ] `4.7` Save with `Cmd+S` keyboard shortcut
-- [ ] `4.8` Confirm before closing a tab with unsaved changes
-- [ ] `4.9` Handle large files gracefully (warn if > 1MB)
+- [x] `4.1` IPC handler: `sftp:readFile` — takes a path, returns file content as string (built in Phase 3 alongside the other SFTP handlers)
+- [x] `4.2` IPC handler: `sftp:writeFile` — takes path + content, writes to remote server (also from Phase 3)
+- [x] `4.3` Integrate Monaco Editor in main panel
+- [x] `4.4` Auto-detect language from file extension (`.env`, `.js`, `.json`, `.sh`, etc.) — explicit `detectLanguage.ts` map, since Monaco has no built-in association for `.env`
+- [x] `4.5` Tab system — multiple files open at once, click to switch (store already existed from scaffold; now actually wired to file opens)
+- [x] `4.6` Unsaved changes indicator (dot on tab) — real dot, not an asterisk
+- [x] `4.7` Save with `Cmd+S` keyboard shortcut (Ctrl+S too)
+- [x] `4.8` Confirm before closing a tab with unsaved changes
+- [x] `4.9` Handle large files gracefully (warn if > 1MB) — checked against the size already known from the directory listing, before reading content
 
 **Branch:** `feat/file-editor`
+**Note:** Clicking a file in `FileTree` now reads it via `sftp:readFile` and opens it in a tab (`id: \`${serverId}:${remotePath}\``), with an "opening…" disabled state and a per-row error if the read fails. Save errors surface as a banner above the editor rather than silently failing. Typechecks/lints clean; main process loads without error. Not yet manually verified end-to-end against a real server — please test opening, editing, Cmd+S save, closing a dirty tab (and cancel), and an oversized file's warning before merging.
 **Done when:** You can click a file in the tree, edit it in Monaco Editor, save it with Cmd+S, and verify the change on the server.
 
 ---
@@ -173,7 +174,7 @@
 | 1 — Server Manager | `[x]` | `feat/server-manager` | Merged to `main` |
 | 2 — SSH Connection | `[x]` | `feat/ssh-connection` | Verified against a real server; merged to `main` |
 | 3 — File Tree | `[x]` | `feat/file-tree` | Verified against a real server; merged to `main` |
-| 4 — File Editor | `[ ]` | `feat/file-editor` | |
+| 4 — File Editor | `[~]` | `feat/file-editor` | Built; needs manual verify against a real server |
 | 5 — Terminal | `[ ]` | `feat/terminal` | |
 | 6 — Docker Panel | `[ ]` | `feat/docker-panel` | |
 | 7 — Env Diff | `[ ]` | `feat/env-diff` | |
