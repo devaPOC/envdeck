@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useRef, useState, type KeyboardEvent } from 'react'
 import { File, Folder, FolderOpen } from 'lucide-react'
 import { joinPath } from '../../utils/path'
 import { FileEntryMenu } from './FileEntryMenu'
@@ -32,6 +32,7 @@ export function FileTreeNode({
   const [renameValue, setRenameValue] = useState(entry.name)
   const [deleting, setDeleting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const renameSubmittedRef = useRef(false)
 
   function loadChildren(): void {
     setLoadingChildren(true)
@@ -54,10 +55,17 @@ export function FileTreeNode({
   }
 
   async function handleRenameSubmit(): Promise<void> {
+    // Enter fires onKeyDown and can also trigger the input's onBlur before this
+    // resolves — guard against submitting the same rename twice (the second
+    // call would target a source path the first rename already moved).
+    if (renameSubmittedRef.current) return
+    renameSubmittedRef.current = true
+
     const newName = renameValue.trim()
     if (!newName || newName === entry.name) {
       setRenaming(false)
       setRenameValue(entry.name)
+      renameSubmittedRef.current = false
       return
     }
     try {
@@ -67,6 +75,7 @@ export function FileTreeNode({
       setActionError(err instanceof Error ? err.message : 'Could not rename this item')
     } finally {
       setRenaming(false)
+      renameSubmittedRef.current = false
     }
   }
 
