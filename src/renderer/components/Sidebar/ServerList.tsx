@@ -38,19 +38,18 @@ export function ServerList(): JSX.Element {
 
   async function handleSave(values: ServerFormValues): Promise<void> {
     if (editingServer) {
-      const wasLive = editingServer.status === 'connected' || editingServer.status === 'connecting'
-
       // Host/username/key may have changed — tear down any live connection so it
       // doesn't keep pointing at the old target.
       await window.electronAPI.ssh.disconnect(editingServer.id)
       const updated = await window.electronAPI.servers.update(editingServer.id, values)
       updateServer(editingServer.id, updated)
 
-      // It was live before the edit, so retry immediately against the new
-      // details instead of waiting for another click. Not awaited — the save
-      // flow (and the modal) shouldn't block on a connection attempt that can
-      // take up to the 15s readyTimeout to fail.
-      if (wasLive) void attemptConnect(editingServer.id)
+      // Always retry against the new details so the dot reflects reality
+      // right away, whether or not the server happened to be connected
+      // before the edit. Not awaited — the save flow (and the modal)
+      // shouldn't block on a connection attempt that can take up to the
+      // 15s readyTimeout to fail.
+      void attemptConnect(editingServer.id)
     } else {
       const created = await window.electronAPI.servers.add(values)
       addServer({ ...created, status: 'disconnected' })
