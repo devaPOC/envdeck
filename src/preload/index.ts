@@ -30,6 +30,15 @@ export interface SftpEntry {
   isHidden: boolean
 }
 
+export interface TerminalDataPayload {
+  terminalId: string
+  data: string
+}
+
+export interface TerminalClosedPayload {
+  terminalId: string
+}
+
 const electronAPI = {
   servers: {
     list: (): Promise<ServerRecord[]> => ipcRenderer.invoke('servers:list'),
@@ -61,6 +70,27 @@ const electronAPI = {
       ipcRenderer.invoke('sftp:rename', serverId, oldPath, newPath),
     remove: (serverId: string, remotePath: string, isDirectory: boolean): Promise<void> =>
       ipcRenderer.invoke('sftp:remove', serverId, remotePath, isDirectory)
+  },
+  terminal: {
+    open: (terminalId: string, serverId: string, cols: number, rows: number): Promise<void> =>
+      ipcRenderer.invoke('terminal:open', terminalId, serverId, cols, rows),
+    input: (terminalId: string, data: string): void =>
+      ipcRenderer.send('terminal:input', terminalId, data),
+    resize: (terminalId: string, cols: number, rows: number): void =>
+      ipcRenderer.send('terminal:resize', terminalId, cols, rows),
+    close: (terminalId: string): Promise<void> => ipcRenderer.invoke('terminal:close', terminalId),
+    onData: (callback: (payload: TerminalDataPayload) => void): (() => void) => {
+      const handler = (_event: IpcRendererEvent, payload: TerminalDataPayload): void =>
+        callback(payload)
+      ipcRenderer.on('terminal:data', handler)
+      return () => ipcRenderer.removeListener('terminal:data', handler)
+    },
+    onClosed: (callback: (payload: TerminalClosedPayload) => void): (() => void) => {
+      const handler = (_event: IpcRendererEvent, payload: TerminalClosedPayload): void =>
+        callback(payload)
+      ipcRenderer.on('terminal:closed', handler)
+      return () => ipcRenderer.removeListener('terminal:closed', handler)
+    }
   },
   docker: {
     listContainers: (serverId: string) => ipcRenderer.invoke('docker:listContainers', serverId),

@@ -4,6 +4,7 @@ import { registerSshHandlers, disconnectAllSsh } from './ipc/ssh'
 import { registerSftpHandlers } from './ipc/sftp'
 import { registerDockerHandlers } from './ipc/docker'
 import { registerServerHandlers } from './ipc/servers'
+import { registerTerminalHandlers, closeAllTerminals } from './ipc/terminal'
 
 const isDev = !app.isPackaged
 
@@ -39,6 +40,7 @@ app.whenReady().then(() => {
   registerSftpHandlers()
   registerDockerHandlers()
   registerServerHandlers()
+  registerTerminalHandlers()
 
   createWindow()
 
@@ -52,5 +54,6 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
+  closeAllTerminals()
   disconnectAllSsh()
 })
