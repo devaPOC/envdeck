@@ -64,15 +64,16 @@
 
 > Browse directories on the remote server.
 
-- [ ] `3.1` IPC handler: `sftp:readdir` — takes a path, returns list of files/folders with name, type, size, permissions
-- [ ] `3.2` Build `FileTree` component — shows folders and files, expand/collapse folders
-- [ ] `3.3` Start at `/` or `~` (home directory) on connect
-- [ ] `3.4` Show file type icons (folder, file, hidden file)
-- [ ] `3.5` Show loading state while fetching directory contents
-- [ ] `3.6` Handle permission errors (can't read directory)
-- [ ] `3.7` Right-click context menu: Rename, Delete, Copy Path
+- [x] `3.1` IPC handler: `sftp:listDir` — takes a path, returns list of files/folders with name, type, size, permissions
+- [x] `3.2` Build `FileTree` component — shows folders and files, expand/collapse folders (lazy-loaded per directory)
+- [x] `3.3` Start at `~` (home directory) on connect — resolved via a new `sftp:home` handler (`realpath('.')`)
+- [x] `3.4` Show file type icons (folder, file, hidden file) — hidden (dotfile) entries are dimmed
+- [x] `3.5` Show loading state while fetching directory contents
+- [x] `3.6` Handle permission errors (can't read directory) — shown inline under the directory that failed
+- [x] `3.7` Right-click context menu: Rename, Delete, Copy Path
 
 **Branch:** `feat/file-tree`
+**Note:** Built on `ssh2`'s native `Client.sftp()` channel (reusing the existing SSH connection from Phase 2) rather than `ssh2-sftp-client` as originally listed in the tech stack — `ssh2-sftp-client` manages its own internal connection and can't attach to an existing `ssh2.Client`, which would have violated the "don't open a separate SSH connection for SFTP" architecture rule. Removed it (and its `@types` package) as an unused dependency. Typechecks/lints clean and the main process loads the new handlers without error; not yet manually verified browsing a real server's directory tree — please test expand/collapse, rename, delete, and a permission-denied directory before merging.
 **Done when:** You can browse the full directory tree of a connected server.
 
 ---
@@ -171,7 +172,7 @@
 | 0 — Setup | `[~]` | `chore/project-setup` | Prettier still pending |
 | 1 — Server Manager | `[x]` | `feat/server-manager` | Merged to `main` |
 | 2 — SSH Connection | `[x]` | `feat/ssh-connection` | Verified against a real server; merged to `main` |
-| 3 — File Tree | `[ ]` | `feat/file-tree` | |
+| 3 — File Tree | `[~]` | `feat/file-tree` | Built; needs manual verify against a real server |
 | 4 — File Editor | `[ ]` | `feat/file-editor` | |
 | 5 — Terminal | `[ ]` | `feat/terminal` | |
 | 6 — Docker Panel | `[ ]` | `feat/docker-panel` | |
