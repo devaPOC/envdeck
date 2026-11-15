@@ -93,7 +93,14 @@
 - [x] `4.9` Handle large files gracefully (warn if > 1MB) — checked against the size already known from the directory listing, before reading content
 
 **Branch:** `feat/file-editor`
-**Note:** Clicking a file in `FileTree` now reads it via `sftp:readFile` and opens it in a tab (`id: \`${serverId}:${remotePath}\``), with an "opening…" disabled state and a per-row error if the read fails. Save errors surface as a banner above the editor rather than silently failing. Typechecks/lints clean; main process loads without error. Not yet manually verified end-to-end against a real server — please test opening, editing, Cmd+S save, closing a dirty tab (and cancel), and an oversized file's warning before merging.
+**Note:** Clicking a file in `FileTree` now reads it via `sftp:readFile` and opens it in a tab (`id: \`${serverId}:${remotePath}\``), with an "opening…" disabled state and a per-row error if the read fails. Save errors surface as a banner above the editor rather than silently failing.
+
+Also fixed a real bug surfaced during testing: `@monaco-editor/react` defaults to fetching Monaco from a CDN, which our CSP (`script-src 'self'`) blocked outright — the editor was stuck on "Loading…" forever. Bundled Monaco locally instead (`monaco-editor` + `vite-plugin-monaco-editor-esm`, with `loader.config({ monaco })` pointing `@monaco-editor/react` at the bundled copy), which is also just correct per CLAUDE.md's offline/no-cloud principle. Two more issues found along the way, both now fixed:
+
+- `monaco-editor` 0.55.0+ added a restrictive `package.json` `exports` map that blocks the deep worker import paths the Vite plugin relies on — pinned to `^0.54.0`, the last version before that.
+- electron-vite resolves `build.outDir` to an absolute path, but the plugin assumes it's relative to `root` (true for a plain Vite app) and joins them incorrectly, silently writing the worker bundle to a bogus nested path instead of the real output directory. Fixed via the plugin's `customDistPath` option in `electron.vite.config.ts`.
+
+Verified end-to-end: dev server serves the worker bundle (200) and a production `electron-vite build` writes it to `out/renderer/monacoeditorwork/`. Typechecks/lints clean. Still not manually verified opening/editing/saving a real file in a live window — please test that, plus closing a dirty tab (and cancel) and the oversized-file warning, before merging.
 **Done when:** You can click a file in the tree, edit it in Monaco Editor, save it with Cmd+S, and verify the change on the server.
 
 ---
