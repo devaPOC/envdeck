@@ -22,6 +22,14 @@ export interface SshStatusPayload {
   message?: string
 }
 
+export interface SftpEntry {
+  name: string
+  type: 'file' | 'directory'
+  size: number
+  permissions: string
+  isHidden: boolean
+}
+
 const electronAPI = {
   servers: {
     list: (): Promise<ServerRecord[]> => ipcRenderer.invoke('servers:list'),
@@ -42,12 +50,17 @@ const electronAPI = {
     }
   },
   sftp: {
-    listDir: (serverId: string, remotePath: string) =>
+    home: (serverId: string): Promise<string> => ipcRenderer.invoke('sftp:home', serverId),
+    listDir: (serverId: string, remotePath: string): Promise<SftpEntry[]> =>
       ipcRenderer.invoke('sftp:listDir', serverId, remotePath),
-    readFile: (serverId: string, remotePath: string) =>
+    readFile: (serverId: string, remotePath: string): Promise<string> =>
       ipcRenderer.invoke('sftp:readFile', serverId, remotePath),
-    writeFile: (serverId: string, remotePath: string, content: string) =>
-      ipcRenderer.invoke('sftp:writeFile', serverId, remotePath, content)
+    writeFile: (serverId: string, remotePath: string, content: string): Promise<void> =>
+      ipcRenderer.invoke('sftp:writeFile', serverId, remotePath, content),
+    rename: (serverId: string, oldPath: string, newPath: string): Promise<void> =>
+      ipcRenderer.invoke('sftp:rename', serverId, oldPath, newPath),
+    remove: (serverId: string, remotePath: string, isDirectory: boolean): Promise<void> =>
+      ipcRenderer.invoke('sftp:remove', serverId, remotePath, isDirectory)
   },
   docker: {
     listContainers: (serverId: string) => ipcRenderer.invoke('docker:listContainers', serverId),
