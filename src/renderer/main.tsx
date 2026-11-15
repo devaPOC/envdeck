@@ -1,4 +1,3 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { loader } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
@@ -10,8 +9,9 @@ import './index.css'
 // app is meant to work fully offline once connected to a server.
 loader.config({ monaco })
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)
+// No <React.StrictMode> here: its deliberate double-invoke of effects in dev
+// is meant to catch web apps relying on effects to be re-run-safe ahead of
+// concurrent rendering features. It doesn't fit a single-window Electron app
+// that opens real external resources in effects (e.g. Terminal's SSH shell
+// channel) — double-invoking that opens two live shells against one tab.
+ReactDOM.createRoot(document.getElementById('root')!).render(<App />)
