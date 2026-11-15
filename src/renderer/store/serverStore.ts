@@ -31,7 +31,10 @@ export const useServerStore = create<ServerState>((set) => ({
       servers: state.servers.map((s) => (s.id === serverId ? { ...s, ...updates } : s))
     })),
   removeServer: (serverId) =>
-    set((state) => ({ servers: state.servers.filter((s) => s.id !== serverId) })),
+    set((state) => ({
+      servers: state.servers.filter((s) => s.id !== serverId),
+      activeServerId: state.activeServerId === serverId ? null : state.activeServerId
+    })),
   setStatus: (serverId, status) =>
     set((state) => ({
       servers: state.servers.map((s) => (s.id === serverId ? { ...s, status } : s))
