@@ -118,7 +118,9 @@ Verified end-to-end, including manually opening/editing/saving a real file in a 
 - [x] `5.7` Multiple terminal tabs support — each gets its own `crypto.randomUUID()` session id; inactive terminals stay mounted (just hidden via CSS) so their scrollback/connection survives tab switches
 
 **Branch:** `feat/terminal`
-**Note:** `terminal:open` takes just a `serverId` (reuses `ssh.ts`'s `getConnection`), not raw connection details — consistent with how Phase 2/3 avoid re-sending credentials. Replaced `EditorTabs.tsx` with `MainPanel.tsx`, which owns a unified tab bar for files and terminals (one `mode: 'file' | 'terminal'` flag decides which content area shows; each store still owns its own list/active-id). New terminal tabs open against the sidebar's currently-selected connected server; the "+ terminal" button is disabled otherwise. Typechecks/lints clean; confirmed both `npm run dev` and a production `electron-vite build` succeed with the new IPC channels and xterm bundled in. Not yet manually verified running real commands in a live terminal — please test typing, resizing the window, multiple concurrent terminal tabs, and closing a tab (shell session should end server-side too) before merging.
+**Note:** `terminal:open` takes just a `serverId` (reuses `ssh.ts`'s `getConnection`), not raw connection details — consistent with how Phase 2/3 avoid re-sending credentials. Replaced `EditorTabs.tsx` with `MainPanel.tsx`, which owns a unified tab bar for files and terminals (one `mode: 'file' | 'terminal'` flag decides which content area shows; each store still owns its own list/active-id). New terminal tabs open against the sidebar's currently-selected connected server; the "+ terminal" button is disabled otherwise.
+
+Verified against a real server, including multiple concurrent terminal tabs. Found and fixed along the way: `<React.StrictMode>` (in `main.tsx`) double-invokes effects in dev, which made each terminal tab briefly open two live shell channels — the first channel's already-in-flight login banner still landed in the same xterm instance before its cleanup could stop it, so a single tab showed two login banners and a mashed-together prompt. Removed StrictMode: its double-invoke targets web apps preparing for concurrent-rendering features, which doesn't fit a single-window Electron app opening real external resources (an SSH shell channel) inside an effect.
 **Done when:** You can open a terminal tab and run commands on the remote server in real time.
 
 ---
@@ -183,7 +185,7 @@ Verified end-to-end, including manually opening/editing/saving a real file in a 
 | 2 — SSH Connection | `[x]` | `feat/ssh-connection` | Verified against a real server; merged to `main` |
 | 3 — File Tree | `[x]` | `feat/file-tree` | Verified against a real server; merged to `main` |
 | 4 — File Editor | `[x]` | `feat/file-editor` | Verified against a real server; merged to `main` |
-| 5 — Terminal | `[~]` | `feat/terminal` | Built; needs manual verify against a real server |
+| 5 — Terminal | `[x]` | `feat/terminal` | Verified against a real server; merged to `main` |
 | 6 — Docker Panel | `[ ]` | `feat/docker-panel` | |
 | 7 — Env Diff | `[ ]` | `feat/env-diff` | |
 | 8 — Polish | `[ ]` | `chore/release-v1` | |
