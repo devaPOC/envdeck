@@ -29,6 +29,10 @@ export function ServerList(): JSX.Element {
 
   async function handleSave(values: ServerFormValues): Promise<void> {
     if (editingServer) {
+      // Host/username/key may have changed — tear down any live connection so it
+      // doesn't keep pointing at the old target. The resulting `ssh:status`
+      // event will flip the dot back to disconnected.
+      await window.electronAPI.ssh.disconnect(editingServer.id)
       const updated = await window.electronAPI.servers.update(editingServer.id, values)
       updateServer(editingServer.id, updated)
     } else {
