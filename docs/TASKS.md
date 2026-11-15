@@ -73,7 +73,7 @@
 - [x] `3.7` Right-click context menu: Rename, Delete, Copy Path
 
 **Branch:** `feat/file-tree`
-**Note:** Built on `ssh2`'s native `Client.sftp()` channel (reusing the existing SSH connection from Phase 2) rather than `ssh2-sftp-client` as originally listed in the tech stack — `ssh2-sftp-client` manages its own internal connection and can't attach to an existing `ssh2.Client`, which would have violated the "don't open a separate SSH connection for SFTP" architecture rule. Removed it (and its `@types` package) as an unused dependency. Typechecks/lints clean and the main process loads the new handlers without error; not yet manually verified browsing a real server's directory tree — please test expand/collapse, rename, delete, and a permission-denied directory before merging.
+**Note:** Built on `ssh2`'s native `Client.sftp()` channel (reusing the existing SSH connection from Phase 2) rather than `ssh2-sftp-client` as originally listed in the tech stack — `ssh2-sftp-client` manages its own internal connection and can't attach to an existing `ssh2.Client`, which would have violated the "don't open a separate SSH connection for SFTP" architecture rule. Removed it (and its `@types` package) as an unused dependency. Manually verified against a real server. Found and fixed along the way: a rename could double-submit (Enter + blur both firing) and throw a spurious "No such file" on the second call; rename/delete were re-fetching the entire directory from the server instead of updating the affected row in place (now optimistic — new name shown disabled immediately, re-enabled once the server confirms, no full reload).
 **Done when:** You can browse the full directory tree of a connected server.
 
 ---
@@ -172,7 +172,7 @@
 | 0 — Setup | `[~]` | `chore/project-setup` | Prettier still pending |
 | 1 — Server Manager | `[x]` | `feat/server-manager` | Merged to `main` |
 | 2 — SSH Connection | `[x]` | `feat/ssh-connection` | Verified against a real server; merged to `main` |
-| 3 — File Tree | `[~]` | `feat/file-tree` | Built; needs manual verify against a real server |
+| 3 — File Tree | `[x]` | `feat/file-tree` | Verified against a real server; merged to `main` |
 | 4 — File Editor | `[ ]` | `feat/file-editor` | |
 | 5 — Terminal | `[ ]` | `feat/terminal` | |
 | 6 — Docker Panel | `[ ]` | `feat/docker-panel` | |
