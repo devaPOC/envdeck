@@ -100,7 +100,7 @@ Also fixed a real bug surfaced during testing: `@monaco-editor/react` defaults t
 - `monaco-editor` 0.55.0+ added a restrictive `package.json` `exports` map that blocks the deep worker import paths the Vite plugin relies on — pinned to `^0.54.0`, the last version before that.
 - electron-vite resolves `build.outDir` to an absolute path, but the plugin assumes it's relative to `root` (true for a plain Vite app) and joins them incorrectly, silently writing the worker bundle to a bogus nested path instead of the real output directory. Fixed via the plugin's `customDistPath` option in `electron.vite.config.ts`.
 
-Verified end-to-end: dev server serves the worker bundle (200) and a production `electron-vite build` writes it to `out/renderer/monacoeditorwork/`. Typechecks/lints clean. Still not manually verified opening/editing/saving a real file in a live window — please test that, plus closing a dirty tab (and cancel) and the oversized-file warning, before merging.
+Verified end-to-end, including manually opening/editing/saving a real file in a live window after the Monaco CDN fix.
 **Done when:** You can click a file in the tree, edit it in Monaco Editor, save it with Cmd+S, and verify the change on the server.
 
 ---
@@ -181,7 +181,7 @@ Verified end-to-end: dev server serves the worker bundle (200) and a production 
 | 1 — Server Manager | `[x]` | `feat/server-manager` | Merged to `main` |
 | 2 — SSH Connection | `[x]` | `feat/ssh-connection` | Verified against a real server; merged to `main` |
 | 3 — File Tree | `[x]` | `feat/file-tree` | Verified against a real server; merged to `main` |
-| 4 — File Editor | `[~]` | `feat/file-editor` | Built; needs manual verify against a real server |
+| 4 — File Editor | `[x]` | `feat/file-editor` | Verified against a real server; merged to `main` |
 | 5 — Terminal | `[ ]` | `feat/terminal` | |
 | 6 — Docker Panel | `[ ]` | `feat/docker-panel` | |
 | 7 — Env Diff | `[ ]` | `feat/env-diff` | |
