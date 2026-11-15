@@ -55,7 +55,7 @@
 - [x] `2.7` Disconnect when app closes (cleanup)
 
 **Branch:** `feat/ssh-connection`
-**Note:** Implemented and typechecked/lints clean; not yet manually verified against a real remote server (sandboxed dev environment can't open a GUI or reach arbitrary hosts) — please test connect/disconnect/error-path against a real box before merging.
+**Note:** Manually verified against a real server — connect, bad-IP error path, and edit-while-connected all confirmed working. Found and fixed along the way: `close` firing right after `error` was clobbering the red error status back to gray; the save modal blocking on a 15s connect timeout; editing a server not retrying the connection. Also added beyond the original scope: a per-server actions menu (Connect/Disconnect/Edit/Delete) with a disabled, animated "Connecting…" state.
 **Done when:** Clicking a server connects to it. Status dot turns green. Error message shows if connection fails.
 
 ---
@@ -170,7 +170,7 @@
 | --- | --- | --- | --- |
 | 0 — Setup | `[~]` | `chore/project-setup` | Prettier still pending |
 | 1 — Server Manager | `[x]` | `feat/server-manager` | Merged to `main` |
-| 2 — SSH Connection | `[~]` | `feat/ssh-connection` | Built; needs manual verify against a real server |
+| 2 — SSH Connection | `[x]` | `feat/ssh-connection` | Verified against a real server; merged to `main` |
 | 3 — File Tree | `[ ]` | `feat/file-tree` | |
 | 4 — File Editor | `[ ]` | `feat/file-editor` | |
 | 5 — Terminal | `[ ]` | `feat/terminal` | |
