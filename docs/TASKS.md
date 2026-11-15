@@ -26,18 +26,19 @@
 
 > User can add, view, edit, and delete server connections.
 
-- [ ] `1.1` Design the `Server` type: `{ id, name, ip, username, pemKey }`
-- [ ] `1.2` Create Zustand `serverStore` — holds list of servers, active server
-- [ ] `1.3` Build `Sidebar` component — shows server list on the left
-- [ ] `1.4` Build `AddServerModal` — form with fields: Name, IP, Username, PEM Key (textarea)
-- [ ] `1.5` Save server to `electron-store` (name, ip, username only)
-- [ ] `1.6` Save PEM key to OS Keychain via `keytar` — IPC call to main process
-- [ ] `1.7` Load saved servers on app start
-- [ ] `1.8` Add edit and delete server actions
-- [ ] `1.9` Confirmation dialog before deleting a server
+- [x] `1.1` Design the `Server` type: `{ id, name, host, username }` (`pemKey` is write-only — never stored in Zustand, kept only in OS Keychain)
+- [x] `1.2` Create Zustand `serverStore` — holds list of servers, active server
+- [x] `1.3` Build `Sidebar` component — shows server list on the left
+- [x] `1.4` Build `AddServerModal` — form with fields: Name, IP, Username, PEM Key (textarea)
+- [x] `1.5` Save server to `electron-store` (name, host, username only)
+- [x] `1.6` Save PEM key to OS Keychain via `keytar` — IPC call to main process
+- [x] `1.7` Load saved servers on app start
+- [x] `1.8` Add edit and delete server actions
+- [x] `1.9` Confirmation dialog before deleting a server
 
 **Branch:** `feat/server-manager`
 **Done when:** You can add a server, see it in the sidebar, edit it, and delete it. Data persists after app restart.
+**Note:** Implemented and typechecked/linted clean; not yet manually verified in a live app window (sandboxed dev environment can't open a GUI) — please run `npm run dev` from your own terminal and confirm add/edit/delete/restart-persistence before merging.
 
 ---
 
@@ -167,7 +168,7 @@
 | Phase | Status | Branch | Notes |
 | --- | --- | --- | --- |
 | 0 — Setup | `[~]` | `chore/project-setup` | Prettier still pending |
-| 1 — Server Manager | `[ ]` | `feat/server-manager` | |
+| 1 — Server Manager | `[~]` | `feat/server-manager` | Built; needs manual verify in a live app window |
 | 2 — SSH Connection | `[ ]` | `feat/ssh-connection` | |
 | 3 — File Tree | `[ ]` | `feat/file-tree` | |
 | 4 — File Editor | `[ ]` | `feat/file-editor` | |

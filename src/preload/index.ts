@@ -1,6 +1,27 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+export interface ServerRecord {
+  id: string
+  name: string
+  host: string
+  username: string
+}
+
+export interface ServerInput {
+  name: string
+  host: string
+  username: string
+  pemKey: string
+}
+
 const electronAPI = {
+  servers: {
+    list: (): Promise<ServerRecord[]> => ipcRenderer.invoke('servers:list'),
+    add: (input: ServerInput): Promise<ServerRecord> => ipcRenderer.invoke('servers:add', input),
+    update: (id: string, input: Partial<ServerInput>): Promise<ServerRecord> =>
+      ipcRenderer.invoke('servers:update', id, input),
+    remove: (id: string): Promise<void> => ipcRenderer.invoke('servers:remove', id)
+  },
   ssh: {
     connect: (options: {
       serverId: string

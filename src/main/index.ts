@@ -3,6 +3,7 @@ import { join } from 'path'
 import { registerSshHandlers } from './ipc/ssh'
 import { registerSftpHandlers } from './ipc/sftp'
 import { registerDockerHandlers } from './ipc/docker'
+import { registerServerHandlers } from './ipc/servers'
 
 const isDev = !app.isPackaged
 
@@ -37,6 +38,7 @@ app.whenReady().then(() => {
   registerSshHandlers()
   registerSftpHandlers()
   registerDockerHandlers()
+  registerServerHandlers()
 
   createWindow()
 
