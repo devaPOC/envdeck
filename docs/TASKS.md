@@ -109,15 +109,18 @@ Verified end-to-end, including manually opening/editing/saving a real file in a 
 
 > Raw SSH terminal inside the app.
 
-- [ ] `5.1` Install and configure `xterm.js` + `xterm-addon-fit`
-- [ ] `5.2` IPC handler: `ssh:shell` — opens an interactive shell session on the SSH connection
-- [ ] `5.3` Build `Terminal` component — renders xterm.js, resizes to fit panel
-- [ ] `5.4` Pipe user keystrokes to SSH shell, pipe shell output back to xterm
-- [ ] `5.5` Add Terminal as a tab in the main panel (alongside file tabs)
-- [ ] `5.6` Handle terminal resize (send new cols/rows to SSH shell)
-- [ ] `5.7` Multiple terminal tabs support (nice to have)
+- [x] `5.1` Install and configure `xterm.js` + `xterm-addon-fit` — as `@xterm/xterm` + `@xterm/addon-fit` (already installed during scaffold)
+- [x] `5.2` IPC handler: `ssh:shell` — as `terminal:open`/`terminal:input`/`terminal:resize`/`terminal:close`, opened via `client.shell()` on the existing SSH connection (reused, not a new connection)
+- [x] `5.3` Build `Terminal` component — renders xterm.js, resizes to fit panel via `ResizeObserver` + `FitAddon`
+- [x] `5.4` Pipe user keystrokes to SSH shell, pipe shell output back to xterm
+- [x] `5.5` Add Terminal as a tab in the main panel (alongside file tabs) — folded `EditorTabs` into a new `MainPanel` that owns one combined tab bar for both
+- [x] `5.6` Handle terminal resize (send new cols/rows to SSH shell)
+- [x] `5.7` Multiple terminal tabs support — each gets its own `crypto.randomUUID()` session id; inactive terminals stay mounted (just hidden via CSS) so their scrollback/connection survives tab switches
 
 **Branch:** `feat/terminal`
+**Note:** `terminal:open` takes just a `serverId` (reuses `ssh.ts`'s `getConnection`), not raw connection details — consistent with how Phase 2/3 avoid re-sending credentials. Replaced `EditorTabs.tsx` with `MainPanel.tsx`, which owns a unified tab bar for files and terminals (one `mode: 'file' | 'terminal'` flag decides which content area shows; each store still owns its own list/active-id). New terminal tabs open against the sidebar's currently-selected connected server; the "+ terminal" button is disabled otherwise.
+
+Verified against a real server, including multiple concurrent terminal tabs. Found and fixed along the way: `<React.StrictMode>` (in `main.tsx`) double-invokes effects in dev, which made each terminal tab briefly open two live shell channels — the first channel's already-in-flight login banner still landed in the same xterm instance before its cleanup could stop it, so a single tab showed two login banners and a mashed-together prompt. Removed StrictMode: its double-invoke targets web apps preparing for concurrent-rendering features, which doesn't fit a single-window Electron app opening real external resources (an SSH shell channel) inside an effect.
 **Done when:** You can open a terminal tab and run commands on the remote server in real time.
 
 ---
@@ -182,7 +185,7 @@ Verified end-to-end, including manually opening/editing/saving a real file in a 
 | 2 — SSH Connection | `[x]` | `feat/ssh-connection` | Verified against a real server; merged to `main` |
 | 3 — File Tree | `[x]` | `feat/file-tree` | Verified against a real server; merged to `main` |
 | 4 — File Editor | `[x]` | `feat/file-editor` | Verified against a real server; merged to `main` |
-| 5 — Terminal | `[ ]` | `feat/terminal` | |
+| 5 — Terminal | `[x]` | `feat/terminal` | Verified against a real server; merged to `main` |
 | 6 — Docker Panel | `[ ]` | `feat/docker-panel` | |
 | 7 — Env Diff | `[ ]` | `feat/env-diff` | |
 | 8 — Polish | `[ ]` | `chore/release-v1` | |
