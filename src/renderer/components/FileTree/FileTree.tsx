@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useServerStore } from '../../store/serverStore'
 import { FileTreeNode } from './FileTreeNode'
 import type { SftpEntry } from './types'
+import { sortEntries } from './sortEntries'
 
 export function FileTree({ serverId }: { serverId: string }): JSX.Element {
   const status = useServerStore(
@@ -12,7 +13,6 @@ export function FileTree({ serverId }: { serverId: string }): JSX.Element {
   const [entries, setEntries] = useState<SftpEntry[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [reloadToken, setReloadToken] = useState(0)
 
   useEffect(() => {
     if (status !== 'connected') {
@@ -46,7 +46,15 @@ export function FileTree({ serverId }: { serverId: string }): JSX.Element {
     return () => {
       cancelled = true
     }
-  }, [serverId, status, reloadToken])
+  }, [serverId, status])
+
+  function handleChildRenamed(oldName: string, updated: SftpEntry): void {
+    setEntries((prev) => prev?.map((e) => (e.name === oldName ? updated : e)).sort(sortEntries) ?? prev)
+  }
+
+  function handleChildDeleted(name: string): void {
+    setEntries((prev) => prev?.filter((e) => e.name !== name) ?? prev)
+  }
 
   if (status !== 'connected') {
     return (
@@ -81,7 +89,8 @@ export function FileTree({ serverId }: { serverId: string }): JSX.Element {
           parentPath={rootPath ?? '/'}
           entry={entry}
           depth={0}
-          onRefreshParent={() => setReloadToken((t) => t + 1)}
+          onRenamed={(updated) => handleChildRenamed(entry.name, updated)}
+          onDeleted={() => handleChildDeleted(entry.name)}
         />
       ))}
     </div>

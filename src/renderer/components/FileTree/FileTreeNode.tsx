@@ -4,13 +4,15 @@ import { joinPath } from '../../utils/path'
 import { FileEntryMenu } from './FileEntryMenu'
 import { ConfirmDialog } from '../ConfirmDialog'
 import type { SftpEntry } from './types'
+import { sortEntries } from './sortEntries'
 
 interface FileTreeNodeProps {
   serverId: string
   parentPath: string
   entry: SftpEntry
   depth: number
-  onRefreshParent: () => void
+  onRenamed: (updated: SftpEntry) => void
+  onDeleted: () => void
 }
 
 export function FileTreeNode({
@@ -18,7 +20,8 @@ export function FileTreeNode({
   parentPath,
   entry,
   depth,
-  onRefreshParent
+  onRenamed,
+  onDeleted
 }: FileTreeNodeProps): JSX.Element {
   const fullPath = joinPath(parentPath, entry.name)
 
@@ -30,6 +33,7 @@ export function FileTreeNode({
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null)
   const [renaming, setRenaming] = useState(false)
   const [renameValue, setRenameValue] = useState(entry.name)
+  const [pendingName, setPendingName] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const renameSubmittedRef = useRef(false)
@@ -49,9 +53,18 @@ export function FileTreeNode({
   }
 
   function handleToggle(): void {
+    if (pendingName) return
     if (entry.type !== 'directory') return
     if (!expanded && children === null) loadChildren()
     setExpanded((value) => !value)
+  }
+
+  function handleChildRenamed(oldName: string, updated: SftpEntry): void {
+    setChildren((prev) => prev?.map((e) => (e.name === oldName ? updated : e)).sort(sortEntries) ?? prev)
+  }
+
+  function handleChildDeleted(name: string): void {
+    setChildren((prev) => prev?.filter((e) => e.name !== name) ?? prev)
   }
 
   async function handleRenameSubmit(): Promise<void> {
@@ -68,13 +81,19 @@ export function FileTreeNode({
       renameSubmittedRef.current = false
       return
     }
+
+    // Show the new name immediately, disabled, instead of re-fetching the
+    // whole directory — the row flips back to normal once the server confirms.
+    setRenaming(false)
+    setPendingName(newName)
     try {
       await window.electronAPI.sftp.rename(serverId, fullPath, joinPath(parentPath, newName))
-      onRefreshParent()
+      onRenamed({ ...entry, name: newName, isHidden: newName.startsWith('.') })
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not rename this item')
+      setRenameValue(entry.name)
     } finally {
-      setRenaming(false)
+      setPendingName(null)
       renameSubmittedRef.current = false
     }
   }
@@ -91,7 +110,7 @@ export function FileTreeNode({
     setDeleting(false)
     try {
       await window.electronAPI.sftp.remove(serverId, fullPath, entry.type === 'directory')
-      onRefreshParent()
+      onDeleted()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not delete this item')
     }
@@ -110,11 +129,14 @@ export function FileTreeNode({
       <div
         onClick={handleToggle}
         onContextMenu={(e) => {
+          if (pendingName) return
           e.preventDefault()
           setMenuPos({ x: e.clientX, y: e.clientY })
         }}
         style={{ paddingLeft: `${depth * 14 + 8}px` }}
-        className="flex cursor-pointer items-center gap-1.5 py-1 pr-2 text-sm hover:bg-neutral-800"
+        className={`flex items-center gap-1.5 py-1 pr-2 text-sm ${
+          pendingName ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-neutral-800'
+        }`}
       >
         {entry.type === 'directory' ? (
           expanded ? (
@@ -137,8 +159,12 @@ export function FileTreeNode({
             className="flex-1 rounded border border-neutral-700 bg-neutral-950 px-1 text-sm text-neutral-100"
           />
         ) : (
-          <span className={`truncate ${entry.isHidden ? 'text-neutral-500' : 'text-neutral-200'}`}>
-            {entry.name}
+          <span
+            className={`truncate ${
+              pendingName || entry.isHidden ? 'text-neutral-500' : 'text-neutral-200'
+            }`}
+          >
+            {pendingName ?? entry.name}
           </span>
         )}
       </div>
@@ -177,7 +203,8 @@ export function FileTreeNode({
               parentPath={fullPath}
               entry={child}
               depth={depth + 1}
-              onRefreshParent={loadChildren}
+              onRenamed={(updated) => handleChildRenamed(child.name, updated)}
+              onDeleted={() => handleChildDeleted(child.name)}
             />
           ))}
         </div>
