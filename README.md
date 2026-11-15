@@ -91,8 +91,10 @@ envdeck/
 │   ├── main/          # Electron main process (SSH, SFTP, IPC)
 │   ├── renderer/      # React UI
 │   └── preload/       # Context bridge
-├── CLAUDE.md          # AI coding instructions
-├── GITHUB.md          # Git workflow guide
+├── docs/
+│   ├── CLAUDE.md      # AI coding instructions
+│   ├── GITHUB.md      # Git workflow guide
+│   └── TASKS.md       # Task board
 └── README.md
 ```
 
@@ -117,7 +119,7 @@ envdeck/
 
 ## Contributing
 
-See [GITHUB.md](./GITHUB.md) for branch strategy, commit conventions, and PR guidelines.
+See [docs/GITHUB.md](./docs/GITHUB.md) for branch strategy, commit conventions, and PR guidelines.
 
 ---
 

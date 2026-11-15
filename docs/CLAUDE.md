@@ -61,9 +61,11 @@ envdeck/
 │   │   └── hooks/             # Custom React hooks
 │   └── preload/
 │       └── index.ts           # Context bridge (exposes IPC to renderer)
-├── CLAUDE.md
+├── docs/
+│   ├── CLAUDE.md
+│   ├── GITHUB.md
+│   └── TASKS.md
 ├── README.md
-├── GITHUB.md
 ├── package.json
 └── electron.vite.config.ts
 ```
