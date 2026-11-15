@@ -47,8 +47,10 @@ export function ServerList(): JSX.Element {
       updateServer(editingServer.id, updated)
 
       // It was live before the edit, so retry immediately against the new
-      // details instead of waiting for another click.
-      if (wasLive) await attemptConnect(editingServer.id)
+      // details instead of waiting for another click. Not awaited — the save
+      // flow (and the modal) shouldn't block on a connection attempt that can
+      // take up to the 15s readyTimeout to fail.
+      if (wasLive) void attemptConnect(editingServer.id)
     } else {
       const created = await window.electronAPI.servers.add(values)
       addServer({ ...created, status: 'disconnected' })
