@@ -33,6 +33,9 @@ function humanizeSshError(err: NodeJS.ErrnoException): string {
   if (/authentication/i.test(err.message)) {
     return 'Authentication failed — check your username and PEM key'
   }
+  if (/timed out/i.test(err.message)) {
+    return 'Connection timed out — check your IP and network'
+  }
   return err.message || 'Could not connect to the server'
 }
 
@@ -40,42 +43,59 @@ export function registerSshHandlers(): void {
   ipcMain.handle('ssh:connect', async (_event, serverId: string): Promise<void> => {
     if (connections.has(serverId)) return
 
-    const server = getServerRecord(serverId)
-    if (!server) throw new Error('Server not found')
+    try {
+      const server = getServerRecord(serverId)
+      if (!server) {
+        broadcastStatus(serverId, 'error', 'Server not found')
+        return
+      }
 
-    const pemKey = await getPemKey(serverId)
-    if (!pemKey) throw new Error('No PEM key saved for this server')
+      const pemKey = await getPemKey(serverId)
+      if (!pemKey) {
+        broadcastStatus(serverId, 'error', 'No PEM key saved for this server')
+        return
+      }
 
-    broadcastStatus(serverId, 'connecting')
+      broadcastStatus(serverId, 'connecting')
 
-    await new Promise<void>((resolve, reject) => {
-      const client = new Client()
+      await new Promise<void>((resolve) => {
+        const client = new Client()
+        let erroredOut = false
 
-      client.on('ready', () => {
-        connections.set(serverId, client)
-        broadcastStatus(serverId, 'connected')
-        resolve()
+        client.on('ready', () => {
+          connections.set(serverId, client)
+          broadcastStatus(serverId, 'connected')
+          resolve()
+        })
+
+        client.on('error', (err: NodeJS.ErrnoException) => {
+          erroredOut = true
+          connections.delete(serverId)
+          broadcastStatus(serverId, 'error', humanizeSshError(err))
+          resolve()
+        })
+
+        client.on('close', () => {
+          connections.delete(serverId)
+          // ssh2 always emits 'close' right after 'error' — skip it here so it
+          // doesn't immediately clobber the error status back to disconnected.
+          if (!erroredOut) broadcastStatus(serverId, 'disconnected')
+        })
+
+        client.connect({
+          host: server.host,
+          username: server.username,
+          privateKey: pemKey,
+          readyTimeout: 15000
+        })
       })
-
-      client.on('error', (err: NodeJS.ErrnoException) => {
-        connections.delete(serverId)
-        const message = humanizeSshError(err)
-        broadcastStatus(serverId, 'error', message)
-        reject(new Error(message))
-      })
-
-      client.on('close', () => {
-        connections.delete(serverId)
-        broadcastStatus(serverId, 'disconnected')
-      })
-
-      client.connect({
-        host: server.host,
-        username: server.username,
-        privateKey: pemKey,
-        readyTimeout: 15000
-      })
-    })
+    } catch (err) {
+      broadcastStatus(
+        serverId,
+        'error',
+        err instanceof Error ? err.message : 'Could not connect to the server'
+      )
+    }
   })
 
   ipcMain.handle('ssh:disconnect', async (_event, serverId: string): Promise<void> => {
