@@ -27,14 +27,28 @@ export function ServerList(): JSX.Element {
     })
   }, [setServers])
 
+  async function attemptConnect(serverId: string): Promise<void> {
+    setStatus(serverId, 'connecting')
+    try {
+      await window.electronAPI.ssh.connect(serverId)
+    } catch {
+      // The main process already broadcast a human-readable error via ssh:status.
+    }
+  }
+
   async function handleSave(values: ServerFormValues): Promise<void> {
     if (editingServer) {
+      const wasLive = editingServer.status === 'connected' || editingServer.status === 'connecting'
+
       // Host/username/key may have changed — tear down any live connection so it
-      // doesn't keep pointing at the old target. The resulting `ssh:status`
-      // event will flip the dot back to disconnected.
+      // doesn't keep pointing at the old target.
       await window.electronAPI.ssh.disconnect(editingServer.id)
       const updated = await window.electronAPI.servers.update(editingServer.id, values)
       updateServer(editingServer.id, updated)
+
+      // It was live before the edit, so retry immediately against the new
+      // details instead of waiting for another click.
+      if (wasLive) await attemptConnect(editingServer.id)
     } else {
       const created = await window.electronAPI.servers.add(values)
       addServer({ ...created, status: 'disconnected' })
@@ -46,13 +60,7 @@ export function ServerList(): JSX.Element {
   async function handleConnect(server: Server): Promise<void> {
     setActiveServer(server.id)
     if (server.status === 'connecting' || server.status === 'connected') return
-
-    setStatus(server.id, 'connecting')
-    try {
-      await window.electronAPI.ssh.connect(server.id)
-    } catch {
-      // The main process already broadcast a human-readable error via ssh:status.
-    }
+    await attemptConnect(server.id)
   }
 
   async function handleConfirmDelete(): Promise<void> {
