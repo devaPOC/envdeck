@@ -8,14 +8,14 @@
 
 ## Phase 0 — Project Setup
 
-- [ ] `0.1` Scaffold Electron + Vite + React + TypeScript project using `electron-vite`
-- [ ] `0.2` Install all dependencies: `ssh2`, `ssh2-sftp-client`, `@monaco-editor/react`, `xterm`, `keytar`, `electron-store`, `zustand`, `lucide-react`, `tailwindcss`
-- [ ] `0.3` Configure Tailwind CSS with dark mode (`darkMode: 'class'`)
-- [ ] `0.4` Set up ESLint + Prettier
-- [ ] `0.5` Create folder structure as defined in `CLAUDE.md`
-- [ ] `0.6` Set up context bridge in `preload/index.ts` (empty stubs for now)
-- [ ] `0.7` Verify `npm run dev` launches the app window
-- [ ] `0.8` Push to GitHub, create `dev` branch
+- [x] `0.1` Scaffold Electron + Vite + React + TypeScript project using `electron-vite`
+- [x] `0.2` Install all dependencies: `ssh2`, `ssh2-sftp-client`, `@monaco-editor/react`, `xterm` (as `@xterm/xterm` + `@xterm/addon-fit`), `keytar`, `electron-store`, `zustand`, `lucide-react`, `tailwindcss`
+- [x] `0.3` Configure Tailwind CSS with dark mode (`darkMode: 'class'`)
+- [~] `0.4` Set up ESLint + Prettier — ESLint done; Prettier not yet added
+- [x] `0.5` Create folder structure as defined in `CLAUDE.md`
+- [x] `0.6` Set up context bridge in `preload/index.ts` (empty stubs for now)
+- [x] `0.7` Verify `npm run dev` launches the app window
+- [x] `0.8` Push to GitHub, create `dev` branch
 
 **Branch:** `chore/project-setup`
 **Done when:** App window opens with blank React page. No errors in console.
@@ -165,8 +165,8 @@
 ## Progress Tracker
 
 | Phase | Status | Branch | Notes |
-|---|---|---|---|
-| 0 — Setup | `[ ]` | `chore/project-setup` | |
+| --- | --- | --- | --- |
+| 0 — Setup | `[~]` | `chore/project-setup` | Prettier still pending |
 | 1 — Server Manager | `[ ]` | `feat/server-manager` | |
 | 2 — SSH Connection | `[ ]` | `feat/ssh-connection` | |
 | 3 — File Tree | `[ ]` | `feat/file-tree` | |
