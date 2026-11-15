@@ -5,6 +5,9 @@ import { FileEntryMenu } from './FileEntryMenu'
 import { ConfirmDialog } from '../ConfirmDialog'
 import type { SftpEntry } from './types'
 import { sortEntries } from './sortEntries'
+import { useEditorStore } from '../../store/editorStore'
+
+const LARGE_FILE_BYTES = 1024 * 1024
 
 interface FileTreeNodeProps {
   serverId: string
@@ -36,7 +39,10 @@ export function FileTreeNode({
   const [pendingName, setPendingName] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [opening, setOpening] = useState(false)
+  const [confirmingLargeOpen, setConfirmingLargeOpen] = useState(false)
   const renameSubmittedRef = useRef(false)
+  const openFile = useEditorStore((state) => state.openFile)
 
   function loadChildren(): void {
     setLoadingChildren(true)
@@ -52,11 +58,33 @@ export function FileTreeNode({
       .finally(() => setLoadingChildren(false))
   }
 
+  async function openInEditor(): Promise<void> {
+    setOpening(true)
+    setActionError(null)
+    try {
+      const content = await window.electronAPI.sftp.readFile(serverId, fullPath)
+      openFile({ id: `${serverId}:${fullPath}`, serverId, remotePath: fullPath, content, isDirty: false })
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not open this file')
+    } finally {
+      setOpening(false)
+    }
+  }
+
   function handleToggle(): void {
-    if (pendingName) return
-    if (entry.type !== 'directory') return
-    if (!expanded && children === null) loadChildren()
-    setExpanded((value) => !value)
+    if (pendingName || opening) return
+
+    if (entry.type === 'directory') {
+      if (!expanded && children === null) loadChildren()
+      setExpanded((value) => !value)
+      return
+    }
+
+    if (entry.size > LARGE_FILE_BYTES) {
+      setConfirmingLargeOpen(true)
+      return
+    }
+    void openInEditor()
   }
 
   function handleChildRenamed(oldName: string, updated: SftpEntry): void {
@@ -129,13 +157,15 @@ export function FileTreeNode({
       <div
         onClick={handleToggle}
         onContextMenu={(e) => {
-          if (pendingName) return
+          if (pendingName || opening) return
           e.preventDefault()
           setMenuPos({ x: e.clientX, y: e.clientY })
         }}
         style={{ paddingLeft: `${depth * 14 + 8}px` }}
         className={`flex items-center gap-1.5 py-1 pr-2 text-sm ${
-          pendingName ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-neutral-800'
+          pendingName || opening
+            ? 'cursor-not-allowed opacity-60'
+            : 'cursor-pointer hover:bg-neutral-800'
         }`}
       >
         {entry.type === 'directory' ? (
@@ -228,6 +258,19 @@ export function FileTreeNode({
           confirmLabel="Delete"
           onConfirm={() => void handleConfirmDelete()}
           onCancel={() => setDeleting(false)}
+        />
+      )}
+
+      {confirmingLargeOpen && (
+        <ConfirmDialog
+          title="Large file"
+          message={`"${entry.name}" is ${(entry.size / (1024 * 1024)).toFixed(1)} MB. Opening large files may be slow. Continue?`}
+          confirmLabel="Open Anyway"
+          onConfirm={() => {
+            setConfirmingLargeOpen(false)
+            void openInEditor()
+          }}
+          onCancel={() => setConfirmingLargeOpen(false)}
         />
       )}
     </div>
