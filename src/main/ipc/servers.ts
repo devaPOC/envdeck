@@ -70,3 +70,7 @@ export function registerServerHandlers(): void {
     await deletePemKey(id)
   })
 }
+
+export function getServerRecord(id: string): ServerRecord | undefined {
+  return store.get('servers').find((s) => s.id === id)
+}
