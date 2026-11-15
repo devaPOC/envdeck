@@ -46,15 +46,16 @@
 
 > App connects to a server and shows connection status.
 
-- [ ] `2.1` IPC handler in main: `ssh:connect` — takes `{ ip, username, pemKey }`, creates SSH connection, stores in a Map keyed by server id
-- [ ] `2.2` IPC handler: `ssh:disconnect` — closes connection, removes from Map
-- [ ] `2.3` Emit connection events back to renderer: `ssh:status` → `connecting | connected | error | disconnected`
-- [ ] `2.4` Show status dot in Sidebar next to each server (green/yellow/red)
-- [ ] `2.5` Connect automatically when user clicks a server
-- [ ] `2.6` Handle errors gracefully: wrong IP, bad PEM key, timeout — show human-readable message
-- [ ] `2.7` Disconnect when app closes (cleanup)
+- [x] `2.1` IPC handler in main: `ssh:connect` — takes `serverId`, looks up host/username (from the servers store) and PEM key (from Keychain), creates SSH connection, stores in a Map keyed by server id
+- [x] `2.2` IPC handler: `ssh:disconnect` — closes connection, removes from Map
+- [x] `2.3` Emit connection events back to renderer: `ssh:status` → `connecting | connected | error | disconnected`
+- [x] `2.4` Show status dot in Sidebar next to each server (green/yellow/red)
+- [x] `2.5` Connect automatically when user clicks a server
+- [x] `2.6` Handle errors gracefully: wrong IP, bad PEM key, timeout — show human-readable message
+- [x] `2.7` Disconnect when app closes (cleanup)
 
 **Branch:** `feat/ssh-connection`
+**Note:** Implemented and typechecked/lints clean; not yet manually verified against a real remote server (sandboxed dev environment can't open a GUI or reach arbitrary hosts) — please test connect/disconnect/error-path against a real box before merging.
 **Done when:** Clicking a server connects to it. Status dot turns green. Error message shows if connection fails.
 
 ---
@@ -168,8 +169,8 @@
 | Phase | Status | Branch | Notes |
 | --- | --- | --- | --- |
 | 0 — Setup | `[~]` | `chore/project-setup` | Prettier still pending |
-| 1 — Server Manager | `[~]` | `feat/server-manager` | Built; needs manual verify in a live app window |
-| 2 — SSH Connection | `[ ]` | `feat/ssh-connection` | |
+| 1 — Server Manager | `[x]` | `feat/server-manager` | Merged to `main` |
+| 2 — SSH Connection | `[~]` | `feat/ssh-connection` | Built; needs manual verify against a real server |
 | 3 — File Tree | `[ ]` | `feat/file-tree` | |
 | 4 — File Editor | `[ ]` | `feat/file-editor` | |
 | 5 — Terminal | `[ ]` | `feat/terminal` | |

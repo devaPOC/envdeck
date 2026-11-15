@@ -15,6 +15,7 @@ export function ServerList(): JSX.Element {
   const addServer = useServerStore((state) => state.addServer)
   const updateServer = useServerStore((state) => state.updateServer)
   const removeServer = useServerStore((state) => state.removeServer)
+  const setStatus = useServerStore((state) => state.setStatus)
 
   const [modalMode, setModalMode] = useState<'closed' | 'open'>('closed')
   const [editingServer, setEditingServer] = useState<Server | null>(null)
@@ -38,8 +39,21 @@ export function ServerList(): JSX.Element {
     setEditingServer(null)
   }
 
+  async function handleConnect(server: Server): Promise<void> {
+    setActiveServer(server.id)
+    if (server.status === 'connecting' || server.status === 'connected') return
+
+    setStatus(server.id, 'connecting')
+    try {
+      await window.electronAPI.ssh.connect(server.id)
+    } catch {
+      // The main process already broadcast a human-readable error via ssh:status.
+    }
+  }
+
   async function handleConfirmDelete(): Promise<void> {
     if (!deletingServer) return
+    await window.electronAPI.ssh.disconnect(deletingServer.id)
     await window.electronAPI.servers.remove(deletingServer.id)
     removeServer(deletingServer.id)
     setDeletingServer(null)
@@ -58,34 +72,38 @@ export function ServerList(): JSX.Element {
       </div>
 
       {servers.map((server) => (
-        <div
-          key={server.id}
-          className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-neutral-800 ${
-            activeServerId === server.id ? 'bg-neutral-800' : ''
-          }`}
-        >
-          <button
-            onClick={() => setActiveServer(server.id)}
-            className="flex flex-1 items-center gap-2 overflow-hidden text-left"
+        <div key={server.id}>
+          <div
+            className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-neutral-800 ${
+              activeServerId === server.id ? 'bg-neutral-800' : ''
+            }`}
           >
-            <StatusDot status={server.status} />
-            <span className="truncate">{server.name}</span>
-          </button>
-          <button
-            onClick={() => {
-              setEditingServer(server)
-              setModalMode('open')
-            }}
-            className="hidden rounded p-1 text-neutral-500 hover:text-neutral-200 group-hover:block"
-          >
-            <Pencil size={12} />
-          </button>
-          <button
-            onClick={() => setDeletingServer(server)}
-            className="hidden rounded p-1 text-neutral-500 hover:text-red-400 group-hover:block"
-          >
-            <Trash2 size={12} />
-          </button>
+            <button
+              onClick={() => handleConnect(server)}
+              className="flex flex-1 items-center gap-2 overflow-hidden text-left"
+            >
+              <StatusDot status={server.status} />
+              <span className="truncate">{server.name}</span>
+            </button>
+            <button
+              onClick={() => {
+                setEditingServer(server)
+                setModalMode('open')
+              }}
+              className="hidden rounded p-1 text-neutral-500 hover:text-neutral-200 group-hover:block"
+            >
+              <Pencil size={12} />
+            </button>
+            <button
+              onClick={() => setDeletingServer(server)}
+              className="hidden rounded p-1 text-neutral-500 hover:text-red-400 group-hover:block"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+          {server.status === 'error' && server.lastError && (
+            <p className="px-2 pb-1 text-xs text-red-400">{server.lastError}</p>
+          )}
         </div>
       ))}
 

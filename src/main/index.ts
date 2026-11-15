@@ -1,6 +1,6 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'path'
-import { registerSshHandlers } from './ipc/ssh'
+import { registerSshHandlers, disconnectAllSsh } from './ipc/ssh'
 import { registerSftpHandlers } from './ipc/sftp'
 import { registerDockerHandlers } from './ipc/docker'
 import { registerServerHandlers } from './ipc/servers'
@@ -49,4 +49,8 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+app.on('before-quit', () => {
+  disconnectAllSsh()
 })

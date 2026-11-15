@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 
 export interface ServerRecord {
   id: string
@@ -14,6 +14,14 @@ export interface ServerInput {
   pemKey: string
 }
 
+export type SshStatus = 'connecting' | 'connected' | 'error' | 'disconnected'
+
+export interface SshStatusPayload {
+  serverId: string
+  status: SshStatus
+  message?: string
+}
+
 const electronAPI = {
   servers: {
     list: (): Promise<ServerRecord[]> => ipcRenderer.invoke('servers:list'),
@@ -23,15 +31,15 @@ const electronAPI = {
     remove: (id: string): Promise<void> => ipcRenderer.invoke('servers:remove', id)
   },
   ssh: {
-    connect: (options: {
-      serverId: string
-      host: string
-      username: string
-      pemKey: string
-      port?: number
-    }) => ipcRenderer.invoke('ssh:connect', options),
-    disconnect: (serverId: string) => ipcRenderer.invoke('ssh:disconnect', serverId),
-    exec: (serverId: string, command: string) => ipcRenderer.invoke('ssh:exec', serverId, command)
+    connect: (serverId: string): Promise<void> => ipcRenderer.invoke('ssh:connect', serverId),
+    disconnect: (serverId: string): Promise<void> =>
+      ipcRenderer.invoke('ssh:disconnect', serverId),
+    exec: (serverId: string, command: string) => ipcRenderer.invoke('ssh:exec', serverId, command),
+    onStatusChange: (callback: (payload: SshStatusPayload) => void): (() => void) => {
+      const handler = (_event: IpcRendererEvent, payload: SshStatusPayload): void => callback(payload)
+      ipcRenderer.on('ssh:status', handler)
+      return () => ipcRenderer.removeListener('ssh:status', handler)
+    }
   },
   sftp: {
     listDir: (serverId: string, remotePath: string) =>

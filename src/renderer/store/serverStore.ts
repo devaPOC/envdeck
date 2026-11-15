@@ -8,6 +8,7 @@ export interface Server {
   host: string
   username: string
   status: ConnectionStatus
+  lastError?: string
 }
 
 interface ServerState {
@@ -17,7 +18,7 @@ interface ServerState {
   addServer: (server: Server) => void
   updateServer: (serverId: string, updates: Partial<Omit<Server, 'id'>>) => void
   removeServer: (serverId: string) => void
-  setStatus: (serverId: string, status: ConnectionStatus) => void
+  setStatus: (serverId: string, status: ConnectionStatus, message?: string) => void
   setActiveServer: (serverId: string | null) => void
 }
 
@@ -35,9 +36,11 @@ export const useServerStore = create<ServerState>((set) => ({
       servers: state.servers.filter((s) => s.id !== serverId),
       activeServerId: state.activeServerId === serverId ? null : state.activeServerId
     })),
-  setStatus: (serverId, status) =>
+  setStatus: (serverId, status, message) =>
     set((state) => ({
-      servers: state.servers.map((s) => (s.id === serverId ? { ...s, status } : s))
+      servers: state.servers.map((s) =>
+        s.id === serverId ? { ...s, status, lastError: status === 'error' ? message : undefined } : s
+      )
     })),
   setActiveServer: (serverId) => set({ activeServerId: serverId })
 }))
