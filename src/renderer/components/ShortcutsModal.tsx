@@ -1,5 +1,7 @@
 const SHORTCUTS: { keys: string; description: string }[] = [
-  { keys: '⌘S', description: 'Save the active file' }
+  { keys: '⌘S', description: 'Save the active file' },
+  { keys: '⌘W', description: 'Close the active tab' },
+  { keys: '⌘T', description: 'Open a new terminal for the selected server' }
 ]
 
 export function ShortcutsModal({ onClose }: { onClose: () => void }): JSX.Element {
