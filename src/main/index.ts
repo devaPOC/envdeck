@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, Menu, shell } from 'electron'
 import { join } from 'path'
 import { registerSshHandlers, disconnectAllSsh } from './ipc/ssh'
 import { registerSftpHandlers } from './ipc/sftp'
@@ -6,6 +6,7 @@ import { registerDockerHandlers } from './ipc/docker'
 import { registerServerHandlers } from './ipc/servers'
 import { registerTerminalHandlers, closeAllTerminals } from './ipc/terminal'
 import { registerAppHandlers } from './ipc/app'
+import { buildApplicationMenu } from './menu'
 
 const isDev = !app.isPackaged
 
@@ -44,6 +45,8 @@ app.whenReady().then(() => {
     website: 'https://github.com/devaPOC/envdeck',
     iconPath: join(__dirname, '../../resources/icon.png')
   })
+
+  Menu.setApplicationMenu(buildApplicationMenu())
 
   registerSshHandlers()
   registerSftpHandlers()
