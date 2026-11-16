@@ -10,13 +10,31 @@ export interface SftpEntry {
   isHidden: boolean
 }
 
+// One SFTP channel per server connection, reused across every operation.
+// Opening a channel costs a round trip for the SSH subsystem request plus
+// another for the SFTP INIT/VERSION handshake — paying that on every single
+// file click, folder expand, or save made the app feel slow over any real
+// network latency.
+const sftpChannels = new Map<string, SFTPWrapper>()
+
 function openSftp(serverId: string): Promise<SFTPWrapper> {
+  const cached = sftpChannels.get(serverId)
+  if (cached) return Promise.resolve(cached)
+
   const client = getConnection(serverId)
   if (!client) return Promise.reject(new Error('Not connected to this server'))
+
   return new Promise((resolve, reject) => {
     client.sftp((err, sftp) => {
-      if (err) reject(err)
-      else resolve(sftp)
+      if (err) {
+        reject(err)
+        return
+      }
+      sftpChannels.set(serverId, sftp)
+      sftp.on('close', () => {
+        if (sftpChannels.get(serverId) === sftp) sftpChannels.delete(serverId)
+      })
+      resolve(sftp)
     })
   })
 }

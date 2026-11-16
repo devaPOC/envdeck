@@ -10,7 +10,11 @@ interface DockerLogsModalProps {
   onClose: () => void
 }
 
-export function DockerLogsModal({ serverId, container, onClose }: DockerLogsModalProps): JSX.Element {
+export function DockerLogsModal({
+  serverId,
+  container,
+  onClose
+}: DockerLogsModalProps): JSX.Element {
   const [allLines, setAllLines] = useState<string[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)

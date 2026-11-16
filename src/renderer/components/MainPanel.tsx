@@ -162,7 +162,9 @@ export function MainPanel(): JSX.Element {
           <div
             key={term.id}
             className="absolute inset-0"
-            style={{ display: mode === 'terminal' && activeTerminalId === term.id ? 'block' : 'none' }}
+            style={{
+              display: mode === 'terminal' && activeTerminalId === term.id ? 'block' : 'none'
+            }}
           >
             <Terminal session={term} />
           </div>

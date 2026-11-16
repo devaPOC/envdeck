@@ -48,7 +48,14 @@ export function EnvDiff(): JSX.Element {
     try {
       const content = await window.electronAPI.sftp.readFile(serverId, path)
       const { lines, entries } = parseEnv(content)
-      setSide((prev) => ({ ...prev, lines, entries, loading: false, dirty: false, saveError: null }))
+      setSide((prev) => ({
+        ...prev,
+        lines,
+        entries,
+        loading: false,
+        dirty: false,
+        saveError: null
+      }))
     } catch (err) {
       setSide((prev) => ({
         ...prev,

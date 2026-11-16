@@ -5,9 +5,7 @@ import type { SftpEntry } from './types'
 import { sortEntries } from './sortEntries'
 
 export function FileTree({ serverId }: { serverId: string }): JSX.Element {
-  const status = useServerStore(
-    (state) => state.servers.find((s) => s.id === serverId)?.status
-  )
+  const status = useServerStore((state) => state.servers.find((s) => s.id === serverId)?.status)
 
   const [rootPath, setRootPath] = useState<string | null>(null)
   const [entries, setEntries] = useState<SftpEntry[] | null>(null)
@@ -49,7 +47,9 @@ export function FileTree({ serverId }: { serverId: string }): JSX.Element {
   }, [serverId, status])
 
   function handleChildRenamed(oldName: string, updated: SftpEntry): void {
-    setEntries((prev) => prev?.map((e) => (e.name === oldName ? updated : e)).sort(sortEntries) ?? prev)
+    setEntries(
+      (prev) => prev?.map((e) => (e.name === oldName ? updated : e)).sort(sortEntries) ?? prev
+    )
   }
 
   function handleChildDeleted(name: string): void {

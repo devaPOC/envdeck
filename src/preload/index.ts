@@ -60,11 +60,11 @@ const electronAPI = {
   },
   ssh: {
     connect: (serverId: string): Promise<void> => ipcRenderer.invoke('ssh:connect', serverId),
-    disconnect: (serverId: string): Promise<void> =>
-      ipcRenderer.invoke('ssh:disconnect', serverId),
+    disconnect: (serverId: string): Promise<void> => ipcRenderer.invoke('ssh:disconnect', serverId),
     exec: (serverId: string, command: string) => ipcRenderer.invoke('ssh:exec', serverId, command),
     onStatusChange: (callback: (payload: SshStatusPayload) => void): (() => void) => {
-      const handler = (_event: IpcRendererEvent, payload: SshStatusPayload): void => callback(payload)
+      const handler = (_event: IpcRendererEvent, payload: SshStatusPayload): void =>
+        callback(payload)
       ipcRenderer.on('ssh:status', handler)
       return () => ipcRenderer.removeListener('ssh:status', handler)
     }
@@ -104,11 +104,16 @@ const electronAPI = {
     }
   },
   docker: {
-    list: (serverId: string): Promise<DockerContainer[]> => ipcRenderer.invoke('docker:list', serverId),
+    list: (serverId: string): Promise<DockerContainer[]> =>
+      ipcRenderer.invoke('docker:list', serverId),
     action: (serverId: string, containerId: string, action: DockerAction): Promise<void> =>
       ipcRenderer.invoke('docker:action', serverId, containerId, action),
     logs: (serverId: string, containerId: string, tailLines?: number): Promise<string> =>
       ipcRenderer.invoke('docker:logs', serverId, containerId, tailLines)
+  },
+  app: {
+    getVersion: (): Promise<string> => ipcRenderer.invoke('app:getVersion'),
+    showAbout: (): Promise<void> => ipcRenderer.invoke('app:showAbout')
   }
 }
 

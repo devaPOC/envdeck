@@ -5,6 +5,7 @@ import { registerSftpHandlers } from './ipc/sftp'
 import { registerDockerHandlers } from './ipc/docker'
 import { registerServerHandlers } from './ipc/servers'
 import { registerTerminalHandlers, closeAllTerminals } from './ipc/terminal'
+import { registerAppHandlers } from './ipc/app'
 
 const isDev = !app.isPackaged
 
@@ -36,11 +37,20 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  app.setAboutPanelOptions({
+    applicationName: 'EnvDeck',
+    applicationVersion: app.getVersion(),
+    version: app.getVersion(),
+    website: 'https://github.com/devaPOC/envdeck',
+    iconPath: join(__dirname, '../../resources/icon.png')
+  })
+
   registerSshHandlers()
   registerSftpHandlers()
   registerDockerHandlers()
   registerServerHandlers()
   registerTerminalHandlers()
+  registerAppHandlers()
 
   createWindow()
 

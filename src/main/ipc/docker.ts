@@ -33,7 +33,10 @@ function friendlyDockerError(stderr: string, code: number | null): string {
 
 export function registerDockerHandlers(): void {
   ipcMain.handle('docker:list', async (_event, serverId: string): Promise<DockerContainer[]> => {
-    const { stdout, stderr, code } = await execCommand(serverId, "docker ps -a --format '{{json .}}'")
+    const { stdout, stderr, code } = await execCommand(
+      serverId,
+      "docker ps -a --format '{{json .}}'"
+    )
     if (code !== 0) throw new Error(friendlyDockerError(stderr, code))
 
     return stdout

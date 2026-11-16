@@ -51,9 +51,7 @@ export function FileTreeNode({
       .listDir(serverId, fullPath)
       .then(setChildren)
       .catch((err) => {
-        setChildrenError(
-          err instanceof Error ? err.message : 'Could not read this directory'
-        )
+        setChildrenError(err instanceof Error ? err.message : 'Could not read this directory')
       })
       .finally(() => setLoadingChildren(false))
   }
@@ -63,7 +61,13 @@ export function FileTreeNode({
     setActionError(null)
     try {
       const content = await window.electronAPI.sftp.readFile(serverId, fullPath)
-      openFile({ id: `${serverId}:${fullPath}`, serverId, remotePath: fullPath, content, isDirty: false })
+      openFile({
+        id: `${serverId}:${fullPath}`,
+        serverId,
+        remotePath: fullPath,
+        content,
+        isDirty: false
+      })
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not open this file')
     } finally {
@@ -88,7 +92,9 @@ export function FileTreeNode({
   }
 
   function handleChildRenamed(oldName: string, updated: SftpEntry): void {
-    setChildren((prev) => prev?.map((e) => (e.name === oldName ? updated : e)).sort(sortEntries) ?? prev)
+    setChildren(
+      (prev) => prev?.map((e) => (e.name === oldName ? updated : e)).sort(sortEntries) ?? prev
+    )
   }
 
   function handleChildDeleted(name: string): void {
@@ -200,10 +206,7 @@ export function FileTreeNode({
       </div>
 
       {actionError && (
-        <p
-          style={{ paddingLeft: `${depth * 14 + 28}px` }}
-          className="pb-1 text-xs text-red-400"
-        >
+        <p style={{ paddingLeft: `${depth * 14 + 28}px` }} className="pb-1 text-xs text-red-400">
           {actionError}
         </p>
       )}

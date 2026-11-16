@@ -20,17 +20,17 @@ A Mac desktop app built with Electron that lets developers manage remote Linux s
 
 ## Tech Stack
 
-| Layer | Library | Notes |
-| --- | --- | --- |
-| Desktop | Electron + Vite | Use `electron-vite` for dev setup |
-| UI | React + Tailwind CSS | Functional components, hooks only |
-| SSH connection | `ssh2` | All SSH ops go through main process |
-| SFTP / file ops | `ssh2-sftp-client` | Built on ssh2 |
-| Code editor | Monaco Editor (`@monaco-editor/react`) | Use for file editing |
-| Local storage | `electron-store` | Server list, preferences |
-| Secure key storage | `keytar` | PEM keys stored in OS Keychain |
-| State management | Zustand | Keep it simple, no Redux |
-| Icons | `lucide-react` | Consistent icon set |
+| Layer              | Library                                | Notes                               |
+| ------------------ | -------------------------------------- | ----------------------------------- |
+| Desktop            | Electron + Vite                        | Use `electron-vite` for dev setup   |
+| UI                 | React + Tailwind CSS                   | Functional components, hooks only   |
+| SSH connection     | `ssh2`                                 | All SSH ops go through main process |
+| SFTP / file ops    | `ssh2-sftp-client`                     | Built on ssh2                       |
+| Code editor        | Monaco Editor (`@monaco-editor/react`) | Use for file editing                |
+| Local storage      | `electron-store`                       | Server list, preferences            |
+| Secure key storage | `keytar`                               | PEM keys stored in OS Keychain      |
+| State management   | Zustand                                | Keep it simple, no Redux            |
+| Icons              | `lucide-react`                         | Consistent icon set                 |
 
 ---
 

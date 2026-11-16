@@ -42,7 +42,13 @@ export function ServerActionsMenu({
               : 'text-neutral-200 hover:bg-neutral-800'
           }`}
         >
-          {isConnecting ? <Plug size={14} /> : isConnected ? <Unplug size={14} /> : <Plug size={14} />}
+          {isConnecting ? (
+            <Plug size={14} />
+          ) : isConnected ? (
+            <Unplug size={14} />
+          ) : (
+            <Plug size={14} />
+          )}
           {isConnecting ? (
             <span className="flex items-center gap-1">
               Connecting

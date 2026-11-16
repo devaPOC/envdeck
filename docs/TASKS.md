@@ -11,7 +11,7 @@
 - [x] `0.1` Scaffold Electron + Vite + React + TypeScript project using `electron-vite`
 - [x] `0.2` Install all dependencies: `ssh2`, `ssh2-sftp-client`, `@monaco-editor/react`, `xterm` (as `@xterm/xterm` + `@xterm/addon-fit`), `keytar`, `electron-store`, `zustand`, `lucide-react`, `tailwindcss`
 - [x] `0.3` Configure Tailwind CSS with dark mode (`darkMode: 'class'`)
-- [~] `0.4` Set up ESLint + Prettier — ESLint done; Prettier not yet added
+- [x] `0.4` Set up ESLint + Prettier — Prettier added in Phase 8 polish (`.prettierrc.json`, `eslint-config-prettier` wired in last so it only disables conflicting stylistic rules), whole codebase reformatted to match with zero behavior change
 - [x] `0.5` Create folder structure as defined in `CLAUDE.md`
 - [x] `0.6` Set up context bridge in `preload/index.ts` (empty stubs for now)
 - [x] `0.7` Verify `npm run dev` launches the app window
@@ -74,6 +74,7 @@
 
 **Branch:** `feat/file-tree`
 **Note:** Built on `ssh2`'s native `Client.sftp()` channel (reusing the existing SSH connection from Phase 2) rather than `ssh2-sftp-client` as originally listed in the tech stack — `ssh2-sftp-client` manages its own internal connection and can't attach to an existing `ssh2.Client`, which would have violated the "don't open a separate SSH connection for SFTP" architecture rule. Removed it (and its `@types` package) as an unused dependency. Manually verified against a real server. Found and fixed along the way: a rename could double-submit (Enter + blur both firing) and throw a spurious "No such file" on the second call; rename/delete were re-fetching the entire directory from the server instead of updating the affected row in place (now optimistic — new name shown disabled immediately, re-enabled once the server confirms, no full reload).
+**Perf fix (Phase 8):** every SFTP operation (`home`, `listDir`, `readFile`, `writeFile`, `rename`, `remove`) was opening a brand-new SFTP channel from scratch — an extra SSH subsystem-open + SFTP INIT/VERSION handshake on every single file click, folder expand, or save. Over any real network latency that's what made opening files feel slow. Now one SFTP channel is opened per server connection and reused for every operation, evicted automatically when it closes (e.g. on disconnect).
 **Done when:** You can browse the full directory tree of a connected server.
 
 ---
@@ -149,7 +150,7 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 > Compare `.env` files between two servers side by side.
 
 - [x] `7.1` Build `EnvDiff` component — stacked (not literal side-by-side columns; see note) picker sections, diff rows below
-- [x] `7.2` Server A picker (server + file path), Server B picker (server + file path) — each has a Browse button opening a small remote file navigator (reuses `sftp.home`/`sftp.listDir`) instead of requiring a hand-typed absolute path; picking a file auto-loads it. Comparing two files on the *same* server works the same way — just pick that server for both sides.
+- [x] `7.2` Server A picker (server + file path), Server B picker (server + file path) — each has a Browse button opening a small remote file navigator (reuses `sftp.home`/`sftp.listDir`) instead of requiring a hand-typed absolute path; picking a file auto-loads it. Comparing two files on the _same_ server works the same way — just pick that server for both sides.
 - [x] `7.3` Fetch both files via `sftp:readFile` (reuses the handler from Phase 3/4, not a separate `sftp:readfile` channel)
 - [x] `7.4` Parse `.env` file into key-value pairs — `envParser.ts`, skips blank lines/comments, keeps each key's line index so edits land back on the right line
 - [x] `7.5` Highlight: keys only in A (red), keys only in B (blue), keys with different values (yellow), matching keys (green)
@@ -159,7 +160,7 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 **Branch:** `feat/env-diff`
 **Note:** CLAUDE.md's layout rule puts Diff in the right panel, which is a fixed 320px wide (`RightPanel.tsx`, `w-80`) — not enough room for a literal two-CSS-column side-by-side layout without being cramped, so the two picker sections stack vertically and each diff row shows both values stacked (`A: ...` / `B: ...`) rather than in adjacent cells. The comparison itself (what's missing/different/matching, colored, with copy actions) works the same either way. Only servers with status `connected` are selectable, consistent with how `FileTree`/`DockerPanel` gate on connection.
 
-Added after initial feedback that hand-typing an absolute path for both sides was too much friction (including just comparing two files on the *same* server, which otherwise worked fine but still needed two manually-typed paths): each side now has a Browse button (`RemoteFileBrowserModal.tsx`) that opens a small remote file navigator reusing the existing `sftp.home`/`sftp.listDir` calls — click into directories, click a file, it auto-loads immediately.
+Added after initial feedback that hand-typing an absolute path for both sides was too much friction (including just comparing two files on the _same_ server, which otherwise worked fine but still needed two manually-typed paths): each side now has a Browse button (`RemoteFileBrowserModal.tsx`) that opens a small remote file navigator reusing the existing `sftp.home`/`sftp.listDir` calls — click into directories, click a file, it auto-loads immediately.
 
 Verified against real servers: loading both sides, every highlight color, copying values in both directions, saving, and the new Browse picker all confirmed working.
 **Done when:** You can load the same `.env` from staging and prod side by side and see exactly what's different.
@@ -168,33 +169,34 @@ Verified against real servers: loading both sides, every highlight color, copyin
 
 ## Phase 8 — Polish & Release
 
-- [ ] `8.1` App icon (512x512 PNG)
-- [ ] `8.2` About page (version, links)
-- [ ] `8.3` Keyboard shortcuts reference panel
-- [ ] `8.4` Error boundary — catch React crashes, show friendly error screen
-- [ ] `8.5` Test on a fresh Mac (no Node.js installed) with the built `.dmg`
-- [ ] `8.6` Record a 60-second demo video for README
-- [ ] `8.7` Tag `v1.0.0` release on GitHub
-- [ ] `8.8` Write a short post on dev.to or LinkedIn about what you built
+- [x] `8.1` App icon (512x512 PNG) — designed from scratch (terminal prompt + the sidebar's own green "connected" dot), rasterized with `rsvg-convert`, packaged as `build/icon.icns` for the `.dmg`/app bundle plus `resources/icon.png` (512x512) as the flat asset
+- [x] `8.2` About page (version, links) — native macOS About panel via `app.setAboutPanelOptions` (version + GitHub link), reachable from the default app menu or the ⓘ button in the sidebar footer
+- [x] `8.3` Keyboard shortcuts reference panel — `ShortcutsModal`, opened from the sidebar footer. Only lists Cmd+S (save), since that's the only shortcut that actually exists in the app right now — didn't invent new ones just to pad this out
+- [x] `8.4` Error boundary — catch React crashes, show friendly error screen — `ErrorBoundary` wraps `<App />`; explains that SSH/terminal sessions live in the main process and survive a renderer reload
+- [ ] `8.5` Test on a fresh Mac (no Node.js installed) with the built `.dmg` — **requires the user**; needs a real separate machine/VM, which isn't available here
+- [ ] `8.6` Record a 60-second demo video for README — **requires the user**; needs real screen recording of a live session
+- [ ] `8.7` Tag `v1.0.0` release on GitHub — holding off until 8.5 passes, since that's the actual release-readiness gate ("Done when" below)
+- [ ] `8.8` Write a short post on dev.to or LinkedIn about what you built — **entirely the user's call**; not something to do on their behalf
 
 **Branch:** `chore/release-v1`
+**Note:** 8.1–8.4 are built and typecheck/lint clean, confirmed via `npm run dev`; a full `npm run build` was run to confirm the icon actually lands in the packaged `.dmg`/app bundle (see commit history for the result). 8.5/8.6/8.8 need the user directly — none of them are things a sandboxed dev environment can do.
 **Done when:** App installs from `.dmg`, works without development setup, and is tagged on GitHub.
 
 ---
 
 ## Progress Tracker
 
-| Phase | Status | Branch | Notes |
-| --- | --- | --- | --- |
-| 0 — Setup | `[~]` | `chore/project-setup` | Prettier still pending |
-| 1 — Server Manager | `[x]` | `feat/server-manager` | Merged to `main` |
-| 2 — SSH Connection | `[x]` | `feat/ssh-connection` | Verified against a real server; merged to `main` |
-| 3 — File Tree | `[x]` | `feat/file-tree` | Verified against a real server; merged to `main` |
-| 4 — File Editor | `[x]` | `feat/file-editor` | Verified against a real server; merged to `main` |
-| 5 — Terminal | `[x]` | `feat/terminal` | Verified against a real server; merged to `main` |
-| 6 — Docker Panel | `[x]` | `feat/docker-panel` | Verified against a real server; merged to `main` |
-| 7 — Env Diff | `[x]` | `feat/env-diff` | Verified against real servers; merged to `main` |
-| 8 — Polish | `[ ]` | `chore/release-v1` | |
+| Phase              | Status | Branch                | Notes                                                      |
+| ------------------ | ------ | --------------------- | ---------------------------------------------------------- |
+| 0 — Setup          | `[x]`  | `chore/project-setup` | Prettier added in Phase 8                                  |
+| 1 — Server Manager | `[x]`  | `feat/server-manager` | Merged to `main`                                           |
+| 2 — SSH Connection | `[x]`  | `feat/ssh-connection` | Verified against a real server; merged to `main`           |
+| 3 — File Tree      | `[x]`  | `feat/file-tree`      | Verified against a real server; merged to `main`           |
+| 4 — File Editor    | `[x]`  | `feat/file-editor`    | Verified against a real server; merged to `main`           |
+| 5 — Terminal       | `[x]`  | `feat/terminal`       | Verified against a real server; merged to `main`           |
+| 6 — Docker Panel   | `[x]`  | `feat/docker-panel`   | Verified against a real server; merged to `main`           |
+| 7 — Env Diff       | `[x]`  | `feat/env-diff`       | Verified against real servers; merged to `main`            |
+| 8 — Polish         | `[~]`  | `chore/release-v1`    | 8.1–8.4 built; 8.5/8.6/8.8 need the user, 8.7 waits on 8.5 |
 
 ---
 
