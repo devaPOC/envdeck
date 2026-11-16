@@ -157,7 +157,11 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 - [x] `7.7` Option to copy a value from one side to the other and save — per-row "to A"/"to B" buttons patch the in-memory file, a "Save A"/"Save B" button (shown only once that side is dirty) writes it back via `sftp:writeFile`
 
 **Branch:** `feat/env-diff`
-**Note:** CLAUDE.md's layout rule puts Diff in the right panel, which is a fixed 320px wide (`RightPanel.tsx`, `w-80`) — not enough room for a literal two-CSS-column side-by-side layout without being cramped, so the two picker sections stack vertically and each diff row shows both values stacked (`A: ...` / `B: ...`) rather than in adjacent cells. The comparison itself (what's missing/different/matching, colored, with copy actions) works the same either way. Only servers with status `connected` are selectable, consistent with how `FileTree`/`DockerPanel` gate on connection. Typechecks/lints clean; confirmed `npm run dev` builds without error. Not yet manually verified against real `.env` files on real servers — please test loading both sides, each highlight color, copying a value in both directions, and saving before merging.
+**Note:** CLAUDE.md's layout rule puts Diff in the right panel, which is a fixed 320px wide (`RightPanel.tsx`, `w-80`) — not enough room for a literal two-CSS-column side-by-side layout without being cramped, so the two picker sections stack vertically and each diff row shows both values stacked (`A: ...` / `B: ...`) rather than in adjacent cells. The comparison itself (what's missing/different/matching, colored, with copy actions) works the same either way. Only servers with status `connected` are selectable, consistent with how `FileTree`/`DockerPanel` gate on connection.
+
+Added after initial feedback that hand-typing an absolute path for both sides was too much friction (including just comparing two files on the *same* server, which otherwise worked fine but still needed two manually-typed paths): each side now has a Browse button (`RemoteFileBrowserModal.tsx`) that opens a small remote file navigator reusing the existing `sftp.home`/`sftp.listDir` calls — click into directories, click a file, it auto-loads immediately.
+
+Verified against real servers: loading both sides, every highlight color, copying values in both directions, saving, and the new Browse picker all confirmed working.
 **Done when:** You can load the same `.env` from staging and prod side by side and see exactly what's different.
 
 ---
@@ -189,7 +193,7 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 | 4 — File Editor | `[x]` | `feat/file-editor` | Verified against a real server; merged to `main` |
 | 5 — Terminal | `[x]` | `feat/terminal` | Verified against a real server; merged to `main` |
 | 6 — Docker Panel | `[x]` | `feat/docker-panel` | Verified against a real server; merged to `main` |
-| 7 — Env Diff | `[~]` | `feat/env-diff` | Built; needs manual verify against real servers |
+| 7 — Env Diff | `[x]` | `feat/env-diff` | Verified against real servers; merged to `main` |
 | 8 — Polish | `[ ]` | `chore/release-v1` | |
 
 ---
