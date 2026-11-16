@@ -11,3 +11,19 @@ mac:
   category: public.app-category.developer-tools
   icon: build/icon.icns
   target: dmg
+dmg:
+  title: EnvDeck ${version}
+  icon: build/icon.icns
+  iconSize: 100
+  background: build/background.png
+  window:
+    width: 540
+    height: 380
+  contents:
+    - x: 140
+      y: 200
+      type: file
+    - x: 400
+      y: 200
+      type: link
+      path: /Applications
