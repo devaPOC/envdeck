@@ -71,12 +71,15 @@ export function registerDockerHandlers(): void {
 
   ipcMain.handle(
     'docker:logs',
-    async (_event, serverId: string, containerId: string): Promise<string> => {
+    async (_event, serverId: string, containerId: string, tailLines = 100): Promise<string> => {
       assertValidContainerId(containerId)
+      if (!Number.isInteger(tailLines) || tailLines <= 0) {
+        throw new Error('Invalid tail line count')
+      }
 
       const { stdout, stderr, code } = await execCommand(
         serverId,
-        `docker logs --tail 100 ${containerId} 2>&1`
+        `docker logs --tail ${tailLines} ${containerId} 2>&1`
       )
       if (code !== 0) throw new Error(friendlyDockerError(stderr, code))
       return stdout

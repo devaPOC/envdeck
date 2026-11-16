@@ -107,8 +107,8 @@ const electronAPI = {
     list: (serverId: string): Promise<DockerContainer[]> => ipcRenderer.invoke('docker:list', serverId),
     action: (serverId: string, containerId: string, action: DockerAction): Promise<void> =>
       ipcRenderer.invoke('docker:action', serverId, containerId, action),
-    logs: (serverId: string, containerId: string): Promise<string> =>
-      ipcRenderer.invoke('docker:logs', serverId, containerId)
+    logs: (serverId: string, containerId: string, tailLines?: number): Promise<string> =>
+      ipcRenderer.invoke('docker:logs', serverId, containerId, tailLines)
   }
 }
 
