@@ -1,38 +1,31 @@
-# EnvDeck — CLAUDE.md
+# EnvDeck — Project Conventions
 
-> Instructions for Claude Code. Read this before writing any code.
-
----
+> Reference for anyone (human or AI) working on this codebase. EnvDeck shipped its v1.0.0 feature set; this file now documents how it's built, not how to build it.
 
 ## What is EnvDeck?
 
-A Mac desktop app built with Electron that lets developers manage remote Linux servers without needing VNC or a GUI setup.
-
-**Core problem it solves:** Connecting to remote servers, editing `.env` files, managing Docker containers, and browsing remote files — all from a clean local UI.
+A Mac desktop app built with Electron that lets developers manage remote Linux servers without needing VNC or a GUI setup — SSH, SFTP file management, Docker, and `.env` diffing, all local.
 
 **Principles:**
 
 - Nothing stored in the cloud. Everything stays on the user's local machine.
 - PEM keys stored in OS Keychain via `keytar` — never written to disk as plaintext.
-- Offline-capable once connected to a server.
-
----
+- Offline-capable once connected to a server (no CDN dependencies — see `src/renderer/customMonaco.ts` and `main.tsx`).
 
 ## Tech Stack
 
-| Layer              | Library                                | Notes                               |
-| ------------------ | -------------------------------------- | ----------------------------------- |
-| Desktop            | Electron + Vite                        | Use `electron-vite` for dev setup   |
-| UI                 | React + Tailwind CSS                   | Functional components, hooks only   |
-| SSH connection     | `ssh2`                                 | All SSH ops go through main process |
-| SFTP / file ops    | `ssh2-sftp-client`                     | Built on ssh2                       |
-| Code editor        | Monaco Editor (`@monaco-editor/react`) | Use for file editing                |
-| Local storage      | `electron-store`                       | Server list, preferences            |
-| Secure key storage | `keytar`                               | PEM keys stored in OS Keychain      |
-| State management   | Zustand                                | Keep it simple, no Redux            |
-| Icons              | `lucide-react`                         | Consistent icon set                 |
-
----
+| Layer              | Library                                | Notes                                                                                                                  |
+| ------------------ | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Desktop            | Electron + Vite                        | `electron-vite` for dev/build                                                                                          |
+| UI                 | React + Tailwind CSS                   | Functional components, hooks only                                                                                      |
+| SSH connection     | `ssh2`                                 | All SSH ops go through the main process                                                                                |
+| SFTP / file ops    | `ssh2`'s native `Client.sftp()`        | **Not** `ssh2-sftp-client` — it opens its own connection, which would violate the one-connection-per-server rule below |
+| Code editor        | Monaco Editor (`@monaco-editor/react`) | Bundled locally (not CDN); only the languages actually used are imported — see `customMonaco.ts`                       |
+| Terminal           | `xterm.js` + `xterm-addon-fit`         |                                                                                                                        |
+| Local storage      | `electron-store`                       | Server list, preferences — pinned to `^8.x` (v9+ is ESM-only and breaks the CJS main process)                          |
+| Secure key storage | `keytar`                               | PEM keys, OS Keychain only                                                                                             |
+| State management   | Zustand                                | One store per concern: servers, editor, terminal                                                                       |
+| Icons              | `lucide-react`                         |                                                                                                                        |
 
 ## Project Structure
 
@@ -40,131 +33,70 @@ A Mac desktop app built with Electron that lets developers manage remote Linux s
 envdeck/
 ├── src/
 │   ├── main/                  # Electron main process
-│   │   ├── index.ts           # App entry, window creation
-│   │   ├── ipc/               # IPC handlers (ssh, sftp, docker)
-│   │   │   ├── ssh.ts
-│   │   │   ├── sftp.ts
-│   │   │   └── docker.ts
+│   │   ├── index.ts           # App entry, window + menu creation
+│   │   ├── menu.ts            # Custom application menu
+│   │   ├── ipc/                # IPC handlers (ssh, sftp, docker, servers, terminal, app)
 │   │   └── keychain.ts        # keytar wrapper
-│   ├── renderer/              # React app (UI)
+│   ├── renderer/               # React app (UI)
 │   │   ├── App.tsx
 │   │   ├── components/
-│   │   │   ├── Sidebar/       # Server list + switcher
-│   │   │   ├── FileTree/      # Remote file explorer
-│   │   │   ├── Editor/        # Monaco editor panel
-│   │   │   ├── Terminal/      # SSH terminal tab
-│   │   │   ├── Docker/        # Container list + controls
-│   │   │   └── EnvDiff/       # Side-by-side .env diff viewer
-│   │   ├── store/             # Zustand stores
-│   │   │   ├── serverStore.ts
-│   │   │   └── editorStore.ts
-│   │   └── hooks/             # Custom React hooks
+│   │   └── store/              # Zustand stores
 │   └── preload/
-│       └── index.ts           # Context bridge (exposes IPC to renderer)
+│       └── index.ts            # Context bridge (exposes IPC to renderer)
 ├── docs/
-│   ├── CLAUDE.md
-│   ├── GITHUB.md
-│   └── TASKS.md
-├── README.md
-├── package.json
+├── build/                      # Icon, DMG background (electron-builder resources)
+├── resources/                  # Flat assets (e.g. icon.png)
 └── electron.vite.config.ts
 ```
 
----
-
 ## Architecture Rules
 
-### IPC (Inter-Process Communication)
+### IPC
 
-- **All SSH/SFTP/system operations MUST run in the main process** — never in the renderer.
-- Renderer calls `window.electronAPI.xxx()` via the context bridge.
-- Preload (`src/preload/index.ts`) exposes only the methods the renderer needs — nothing else.
-- Never expose `ipcRenderer` or `ipcMain` directly to the renderer.
+- **All SSH/SFTP/Docker/system operations run in the main process** — never in the renderer.
+- Renderer calls `window.electronAPI.xxx()` via the context bridge only.
+- Preload exposes only the methods the renderer needs — nothing else.
+- Never expose `ipcRenderer`/`ipcMain` directly to the renderer.
 
 ### Security
 
-- PEM key content is passed once from renderer to main on connect. Main stores it in memory only for the session. Never pass it back to renderer.
-- Use `contextIsolation: true` and `nodeIntegration: false` in `BrowserWindow`.
-- Sanitize all file paths before passing to SFTP operations.
+- PEM key content is sent once from renderer to main on add/edit, stored in the Keychain, never sent back.
+- `contextIsolation: true`, `nodeIntegration: false`.
+- Container IDs and shell commands built from user input (Docker panel) are validated against a strict pattern before ever reaching a shell command string.
 
 ### SSH / SFTP
 
-- One SSH connection object per server, stored in a Map in main process.
-- SFTP client is created from the SSH connection — do not open a separate SSH connection for SFTP.
-- Always handle connection errors and emit them back to renderer via IPC event.
+- **One SSH connection per server**, cached in a `Map` in `ssh.ts`.
+- **One SFTP channel per server**, cached and reused for every file operation — opening a channel costs two network round trips (subsystem open + SFTP INIT/VERSION), so it's opened once and reused, not once per click.
+- Shell (terminal) and exec channels multiplex over that same connection; nothing opens a second TCP connection to the same server.
 
 ### State (Renderer)
 
-- Use Zustand for global state: active server, open files, editor tabs.
-- Local component state (useState) for UI-only state (hover, loading spinners).
-- Do not store sensitive data (PEM content, passwords) in Zustand.
-
----
-
-## Feature Scope (v1)
-
-Build these in order:
-
-1. **Server Manager** — Add/edit/delete server connections (name, IP, username, PEM key)
-2. **SSH Connect** — Establish connection, show status indicator
-3. **File Tree** — Browse remote directories via SFTP
-4. **File Editor** — Open, edit, and save remote files (Monaco Editor)
-5. **Terminal** — Raw SSH terminal tab using `xterm.js`
-6. **Docker Panel** — List containers (`docker ps`), start/stop/restart
-7. **Env Diff** — Select same file across two connected servers, show diff
-
-Do not build features outside this list for v1.
-
----
+- Zustand for state shared across components: servers, open files, terminal sessions.
+- Local `useState` for UI-only state (menus, modals, inline editing).
+- Never store PEM content or passwords in Zustand or `electron-store`.
 
 ## UI / UX Rules
 
-- Dark theme by default. Use Tailwind's `dark:` classes.
-- Layout: left sidebar (server list + file tree) | main area (editor / terminal tabs) | right panel (Docker / Diff, toggleable)
-- Use tabs for open files — same pattern as VSCode.
-- Show connection status per server (green dot = connected, red = error, yellow = connecting).
-- All destructive actions (delete server, overwrite file) require a confirmation dialog.
-- Error messages must be human-readable: "Could not connect — check your IP and PEM key" not "ECONNREFUSED".
-
----
+- Dark theme by default, no inline styles — Tailwind only.
+- Layout: left sidebar (servers + file manager) | main area (editor/terminal tabs) | right panel (Docker/Diff, toggleable).
+- All destructive actions (delete, stop/restart a container, overwrite a file) require a confirmation dialog.
+- Error messages are human-readable ("Could not connect — check your IP and PEM key"), never raw error codes or stack traces.
 
 ## Code Style
 
-- TypeScript everywhere. No `any` types — use proper interfaces.
-- Async/await, not `.then()` chains.
-- One component per file. File name = component name (PascalCase).
-- Utility functions go in `src/renderer/utils/` or `src/main/utils/`.
-- No inline styles. Tailwind classes only.
-- Handle every async operation with try/catch and surface errors to the UI.
-
----
-
-## What to Avoid
-
-- Do not use `shell: true` in any `exec` or `spawn` call — security risk.
-- Do not store PEM key content in `electron-store` — use `keytar`.
-- Do not make direct HTTP calls from the renderer — route through main process IPC.
-- Do not use `remote` module (deprecated in Electron).
-- Do not add dependencies without a clear reason.
-
----
+- TypeScript everywhere, no `any`.
+- Async/await, not `.then()` chains (except where composing promises makes that clearer).
+- One component per file, PascalCase matching the component name.
+- Prettier (`.prettierrc.json`) + ESLint (`eslint-config-prettier` wired in last) — run `npm run format` / `npm run lint`.
+- Don't add a dependency without a clear reason; don't re-fetch or re-render more than necessary (see the SFTP channel-reuse and Monaco bundle-trimming notes above — both were real, measured problems, not speculative ones).
 
 ## Dev Commands
 
 ```bash
 npm run dev          # Start Electron + Vite dev server
-npm run build        # Build for production (Mac .dmg)
-npm run typecheck    # Run TypeScript checks
+npm run build        # Build for production (.dmg)
+npm run typecheck    # TypeScript checks
 npm run lint         # ESLint
+npm run format       # Prettier (writes)
 ```
-
----
-
-## Definition of Done (per feature)
-
-A feature is complete when:
-
-- [ ] It works on a real remote server (manual test)
-- [ ] Errors are handled and shown in the UI
-- [ ] No TypeScript errors
-- [ ] Code is committed with a descriptive message (see GITHUB.md)
