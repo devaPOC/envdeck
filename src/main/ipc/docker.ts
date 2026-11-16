@@ -71,15 +71,18 @@ export function registerDockerHandlers(): void {
 
   ipcMain.handle(
     'docker:logs',
-    async (_event, serverId: string, containerId: string, tailLines = 100): Promise<string> => {
+    async (_event, serverId: string, containerId: string, tailLines?: number): Promise<string> => {
       assertValidContainerId(containerId)
-      if (!Number.isInteger(tailLines) || tailLines <= 0) {
+      if (tailLines !== undefined && (!Number.isInteger(tailLines) || tailLines <= 0)) {
         throw new Error('Invalid tail line count')
       }
 
+      // No tailLines → fetch the whole log so the renderer can paginate it
+      // client-side without re-running this over SSH on every page turn.
+      const tailFlag = tailLines !== undefined ? `--tail ${tailLines} ` : ''
       const { stdout, stderr, code } = await execCommand(
         serverId,
-        `docker logs --tail ${tailLines} ${containerId} 2>&1`
+        `docker logs ${tailFlag}${containerId} 2>&1`
       )
       if (code !== 0) throw new Error(friendlyDockerError(stderr, code))
       return stdout

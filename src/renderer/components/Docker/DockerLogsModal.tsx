@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { DockerContainer } from './DockerPanel'
 
@@ -11,11 +11,10 @@ interface DockerLogsModalProps {
 }
 
 export function DockerLogsModal({ serverId, container, onClose }: DockerLogsModalProps): JSX.Element {
-  const [page, setPage] = useState(1)
-  const [lines, setLines] = useState<string[]>([])
-  const [hasOlder, setHasOlder] = useState(true)
-  const [loading, setLoading] = useState(true)
+  const [allLines, setAllLines] = useState<string[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     let cancelled = false
@@ -23,21 +22,13 @@ export function DockerLogsModal({ serverId, container, onClose }: DockerLogsModa
     setError(null)
 
     window.electronAPI.docker
-      .logs(serverId, container.id, page * PAGE_SIZE)
+      .logs(serverId, container.id)
       .then((text) => {
         if (cancelled) return
-
-        const allLines = text === '' ? [] : text.split('\n')
-        if (allLines.length > 0 && allLines[allLines.length - 1] === '') allLines.pop()
-
-        // We fetched the last `page * PAGE_SIZE` lines; the lines already
-        // shown by newer pages are the LAST `(page - 1) * PAGE_SIZE` of that
-        // fetch, so this page's window is whatever's left before them.
-        const alreadyShown = (page - 1) * PAGE_SIZE
-        const pageLines = allLines.slice(0, Math.max(0, allLines.length - alreadyShown))
-
-        setLines(pageLines)
-        setHasOlder(pageLines.length === PAGE_SIZE)
+        const lines = text === '' ? [] : text.split('\n')
+        if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop()
+        setAllLines(lines)
+        setPage(1)
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Could not fetch logs')
@@ -49,7 +40,18 @@ export function DockerLogsModal({ serverId, container, onClose }: DockerLogsModa
     return () => {
       cancelled = true
     }
-  }, [serverId, container.id, page])
+  }, [serverId, container.id])
+
+  const totalPages = allLines ? Math.max(1, Math.ceil(allLines.length / PAGE_SIZE)) : 1
+
+  // Page 1 is the most recent PAGE_SIZE lines (the end of the array), so
+  // higher page numbers move further back in time.
+  const pageLines = useMemo(() => {
+    if (!allLines) return []
+    const end = allLines.length - (page - 1) * PAGE_SIZE
+    const start = Math.max(0, end - PAGE_SIZE)
+    return allLines.slice(start, end)
+  }, [allLines, page])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
@@ -66,24 +68,24 @@ export function DockerLogsModal({ serverId, container, onClose }: DockerLogsModa
           {error && <p className="text-sm text-red-400">{error}</p>}
           {!loading && !error && (
             <pre className="whitespace-pre-wrap break-all font-mono text-xs text-neutral-300">
-              {lines.length > 0 ? lines.join('\n') : 'No log output'}
+              {pageLines.length > 0 ? pageLines.join('\n') : 'No log output'}
             </pre>
           )}
         </div>
 
         <div className="flex items-center justify-between pt-3">
           <button
-            disabled={loading || !hasOlder}
-            onClick={() => setPage((p) => p + 1)}
+            disabled={loading || page >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             className="flex items-center gap-1 rounded px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft size={12} /> Previous 100
           </button>
           <span className="text-xs text-neutral-500">
-            {page === 1 ? 'Most recent' : `${(page - 1) * PAGE_SIZE} lines back`}
+            Page {page} of {totalPages}
           </span>
           <button
-            disabled={loading || page === 1}
+            disabled={loading || page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             className="flex items-center gap-1 rounded px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
