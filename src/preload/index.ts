@@ -28,6 +28,7 @@ export interface SftpEntry {
   size: number
   permissions: string
   isHidden: boolean
+  modifiedAt: number
 }
 
 export interface TerminalDataPayload {
@@ -80,7 +81,9 @@ const electronAPI = {
     rename: (serverId: string, oldPath: string, newPath: string): Promise<void> =>
       ipcRenderer.invoke('sftp:rename', serverId, oldPath, newPath),
     remove: (serverId: string, remotePath: string, isDirectory: boolean): Promise<void> =>
-      ipcRenderer.invoke('sftp:remove', serverId, remotePath, isDirectory)
+      ipcRenderer.invoke('sftp:remove', serverId, remotePath, isDirectory),
+    mkdir: (serverId: string, remotePath: string): Promise<void> =>
+      ipcRenderer.invoke('sftp:mkdir', serverId, remotePath)
   },
   terminal: {
     open: (terminalId: string, serverId: string, cols: number, rows: number): Promise<void> =>

@@ -4,4 +4,5 @@ export interface SftpEntry {
   size: number
   permissions: string
   isHidden: boolean
+  modifiedAt: number
 }

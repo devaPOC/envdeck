@@ -8,6 +8,7 @@ export interface SftpEntry {
   size: number
   permissions: string
   isHidden: boolean
+  modifiedAt: number
 }
 
 // One SFTP channel per server connection, reused across every operation.
@@ -51,7 +52,9 @@ function toSftpEntry(entry: FileEntryWithStats): SftpEntry {
     type: entry.attrs.isDirectory() ? 'directory' : 'file',
     size: entry.attrs.size,
     permissions: formatPermissions(entry.attrs.mode),
-    isHidden: entry.filename.startsWith('.')
+    isHidden: entry.filename.startsWith('.'),
+    // ssh2 reports mtime in seconds since epoch; JS Date wants milliseconds.
+    modifiedAt: entry.attrs.mtime * 1000
   }
 }
 
@@ -111,6 +114,16 @@ export function registerSftpHandlers(): void {
       const sftp = await openSftp(serverId)
       return new Promise((resolve, reject) => {
         sftp.rename(oldPath, newPath, (err) => (err ? reject(err) : resolve()))
+      })
+    }
+  )
+
+  ipcMain.handle(
+    'sftp:mkdir',
+    async (_event, serverId: string, remotePath: string): Promise<void> => {
+      const sftp = await openSftp(serverId)
+      return new Promise((resolve, reject) => {
+        sftp.mkdir(remotePath, (err) => (err ? reject(err) : resolve()))
       })
     }
   )
