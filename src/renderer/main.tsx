@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom/client'
 import { loader } from '@monaco-editor/react'
-import * as monaco from 'monaco-editor'
+import { monaco } from './customMonaco'
 import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import './index.css'
