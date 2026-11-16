@@ -169,7 +169,7 @@ Verified against real servers: loading both sides, every highlight color, copyin
 
 ## Phase 8 — Polish & Release
 
-- [x] `8.1` App icon (512x512 PNG) — designed from scratch (terminal prompt + the sidebar's own green "connected" dot), rasterized with `rsvg-convert`, packaged as `build/icon.icns` for the `.dmg`/app bundle plus `resources/icon.png` (512x512) as the flat asset
+- [x] `8.1` App icon (512x512 PNG) — designed from scratch (terminal prompt + the sidebar's own green "connected" dot), rasterized with `rsvg-convert`, packaged as `build/icon.icns` for the `.dmg`/app bundle plus `resources/icon.png` (512x512) as the flat asset. Also replaced the `.dmg` installer's generic gray background/arrow with a custom one matching the same look (`electron-builder.yml`'s `dmg` section); verified by mounting a rebuilt `.dmg` and converting its `.background.tiff` back to a PNG to confirm it actually landed correctly.
 - [x] `8.2` About page (version, links) — native macOS About panel via `app.setAboutPanelOptions` (version + GitHub link), reachable from the default app menu or the ⓘ button in the sidebar footer
 - [x] `8.3` Keyboard shortcuts reference panel — `ShortcutsModal`, opened from the sidebar footer. Only lists Cmd+S (save), since that's the only shortcut that actually exists in the app right now — didn't invent new ones just to pad this out
 - [x] `8.4` Error boundary — catch React crashes, show friendly error screen — `ErrorBoundary` wraps `<App />`; explains that SSH/terminal sessions live in the main process and survive a renderer reload
