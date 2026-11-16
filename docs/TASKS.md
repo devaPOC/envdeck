@@ -186,7 +186,7 @@ Verified against real servers: loading both sides, every highlight color, copyin
 - [ ] `8.8` Write a short post on dev.to or LinkedIn about what you built — **entirely the user's call**; not something to do on their behalf
 
 **Branch:** `chore/release-v1`
-**Note:** 8.1–8.4 are built and typecheck/lint clean, confirmed via `npm run dev`; a full `npm run build` was run to confirm the icon actually lands in the packaged `.dmg`/app bundle (see commit history for the result). 8.5/8.6/8.8 need the user directly — none of them are things a sandboxed dev environment can do.
+**Note:** 8.1–8.4 built, typecheck/lint clean, confirmed via `npm run dev`. Also folded in, per feedback during this phase's testing: Cmd+W/Cmd+T shortcuts (and the app-menu conflict that surfaced), Finder-style New File/New Folder/Get Info on the file tree (see Phase 3's note), and trimming Monaco's unused languages. Final `npm run build` succeeded end-to-end with everything included — `dist/EnvDeck-0.1.0-arm64.dmg`, 144MB (the Electron runtime, not our code — see the build-size note above). 8.5/8.6/8.8 need the user directly — none of them are things a sandboxed dev environment can do.
 **Done when:** App installs from `.dmg`, works without development setup, and is tagged on GitHub.
 
 ---
