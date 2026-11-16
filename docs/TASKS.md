@@ -148,15 +148,16 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 
 > Compare `.env` files between two servers side by side.
 
-- [ ] `7.1` Build `EnvDiff` component — two-column layout
-- [ ] `7.2` Left column: pick server A + file path. Right column: pick server B + file path.
-- [ ] `7.3` Fetch both files via `sftp:readfile`
-- [ ] `7.4` Parse `.env` file into key-value pairs
-- [ ] `7.5` Highlight: keys only in A (red), keys only in B (blue), keys with different values (yellow), matching keys (green)
-- [ ] `7.6` Summary bar: "3 missing, 2 different, 10 matching"
-- [ ] `7.7` Option to copy a value from one side to the other and save
+- [x] `7.1` Build `EnvDiff` component — stacked (not literal side-by-side columns; see note) picker sections, diff rows below
+- [x] `7.2` Server A picker (server + file path), Server B picker (server + file path)
+- [x] `7.3` Fetch both files via `sftp:readFile` (reuses the handler from Phase 3/4, not a separate `sftp:readfile` channel)
+- [x] `7.4` Parse `.env` file into key-value pairs — `envParser.ts`, skips blank lines/comments, keeps each key's line index so edits land back on the right line
+- [x] `7.5` Highlight: keys only in A (red), keys only in B (blue), keys with different values (yellow), matching keys (green)
+- [x] `7.6` Summary bar: "N missing, N different, N matching"
+- [x] `7.7` Option to copy a value from one side to the other and save — per-row "to A"/"to B" buttons patch the in-memory file, a "Save A"/"Save B" button (shown only once that side is dirty) writes it back via `sftp:writeFile`
 
 **Branch:** `feat/env-diff`
+**Note:** CLAUDE.md's layout rule puts Diff in the right panel, which is a fixed 320px wide (`RightPanel.tsx`, `w-80`) — not enough room for a literal two-CSS-column side-by-side layout without being cramped, so the two picker sections stack vertically and each diff row shows both values stacked (`A: ...` / `B: ...`) rather than in adjacent cells. The comparison itself (what's missing/different/matching, colored, with copy actions) works the same either way. Only servers with status `connected` are selectable, consistent with how `FileTree`/`DockerPanel` gate on connection. Typechecks/lints clean; confirmed `npm run dev` builds without error. Not yet manually verified against real `.env` files on real servers — please test loading both sides, each highlight color, copying a value in both directions, and saving before merging.
 **Done when:** You can load the same `.env` from staging and prod side by side and see exactly what's different.
 
 ---
@@ -188,7 +189,7 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 | 4 — File Editor | `[x]` | `feat/file-editor` | Verified against a real server; merged to `main` |
 | 5 — Terminal | `[x]` | `feat/terminal` | Verified against a real server; merged to `main` |
 | 6 — Docker Panel | `[x]` | `feat/docker-panel` | Verified against a real server; merged to `main` |
-| 7 — Env Diff | `[ ]` | `feat/env-diff` | |
+| 7 — Env Diff | `[~]` | `feat/env-diff` | Built; needs manual verify against real servers |
 | 8 — Polish | `[ ]` | `chore/release-v1` | |
 
 ---
