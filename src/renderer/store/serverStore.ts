@@ -39,7 +39,9 @@ export const useServerStore = create<ServerState>((set) => ({
   setStatus: (serverId, status, message) =>
     set((state) => ({
       servers: state.servers.map((s) =>
-        s.id === serverId ? { ...s, status, lastError: status === 'error' ? message : undefined } : s
+        s.id === serverId
+          ? { ...s, status, lastError: status === 'error' ? message : undefined }
+          : s
       )
     })),
   setActiveServer: (serverId) => set({ activeServerId: serverId })

@@ -80,7 +80,9 @@ export function DockerPanel({ serverId }: { serverId: string }): JSX.Element {
 
   if (status !== 'connected') {
     return (
-      <div className="p-3 text-sm text-neutral-500">Connect to this server to see Docker containers.</div>
+      <div className="p-3 text-sm text-neutral-500">
+        Connect to this server to see Docker containers.
+      </div>
     )
   }
 
@@ -103,7 +105,10 @@ export function DockerPanel({ serverId }: { serverId: string }): JSX.Element {
       {containers.map((container) => {
         const isPending = pendingId === container.id
         return (
-          <div key={container.id} className="flex flex-col gap-1 rounded border border-neutral-800 p-2">
+          <div
+            key={container.id}
+            className="flex flex-col gap-1 rounded border border-neutral-800 p-2"
+          >
             <div className="flex items-center justify-between gap-2">
               <button
                 onClick={() => setViewingLogsFor(container)}
@@ -120,7 +125,9 @@ export function DockerPanel({ serverId }: { serverId: string }): JSX.Element {
             </div>
             <p className="truncate text-xs text-neutral-500">{container.image}</p>
             <p className="truncate text-xs text-neutral-500">{container.status}</p>
-            {container.ports && <p className="truncate text-xs text-neutral-500">{container.ports}</p>}
+            {container.ports && (
+              <p className="truncate text-xs text-neutral-500">{container.ports}</p>
+            )}
 
             <div className="flex items-center gap-1 pt-1">
               {container.running ? (

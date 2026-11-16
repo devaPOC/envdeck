@@ -71,15 +71,15 @@ Follow **Conventional Commits** — this makes your git history readable and pro
 
 ### Types
 
-| Type | When to use |
-| --- | --- |
-| `feat` | New feature or capability |
-| `fix` | Bug fix |
-| `chore` | Setup, config, dependencies (no production code) |
-| `style` | UI/CSS changes only |
-| `refactor` | Code restructure, no behavior change |
-| `docs` | README, CLAUDE.md, comments |
-| `test` | Tests only |
+| Type       | When to use                                      |
+| ---------- | ------------------------------------------------ |
+| `feat`     | New feature or capability                        |
+| `fix`      | Bug fix                                          |
+| `chore`    | Setup, config, dependencies (no production code) |
+| `style`    | UI/CSS changes only                              |
+| `refactor` | Code restructure, no behavior change             |
+| `docs`     | README, CLAUDE.md, comments                      |
+| `test`     | Tests only                                       |
 
 ### Examples
 
@@ -145,14 +145,17 @@ When a feature is complete and manually tested:
 
 ```markdown
 ## What this PR does
+
 Brief description of the feature.
 
 ## How to test
+
 1. Step one
 2. Step two
 3. Expected result
 
 ## Screenshots
+
 (attach a screenshot or screen recording of the feature working)
 ```
 

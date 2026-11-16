@@ -1,10 +1,12 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, Menu, shell } from 'electron'
 import { join } from 'path'
 import { registerSshHandlers, disconnectAllSsh } from './ipc/ssh'
 import { registerSftpHandlers } from './ipc/sftp'
 import { registerDockerHandlers } from './ipc/docker'
 import { registerServerHandlers } from './ipc/servers'
 import { registerTerminalHandlers, closeAllTerminals } from './ipc/terminal'
+import { registerAppHandlers } from './ipc/app'
+import { buildApplicationMenu } from './menu'
 
 const isDev = !app.isPackaged
 
@@ -36,11 +38,22 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  app.setAboutPanelOptions({
+    applicationName: 'EnvDeck',
+    applicationVersion: app.getVersion(),
+    version: app.getVersion(),
+    website: 'https://github.com/devaPOC/envdeck',
+    iconPath: join(__dirname, '../../resources/icon.png')
+  })
+
+  Menu.setApplicationMenu(buildApplicationMenu())
+
   registerSshHandlers()
   registerSftpHandlers()
   registerDockerHandlers()
   registerServerHandlers()
   registerTerminalHandlers()
+  registerAppHandlers()
 
   createWindow()
 

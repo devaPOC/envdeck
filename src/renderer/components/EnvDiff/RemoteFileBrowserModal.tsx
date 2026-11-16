@@ -50,7 +50,8 @@ export function RemoteFileBrowserModal({
         if (!cancelled) setEntries([...list].sort(sortEntries))
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Could not read this directory')
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : 'Could not read this directory')
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -71,7 +72,9 @@ export function RemoteFileBrowserModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="flex max-h-[70vh] w-96 flex-col rounded-lg border border-neutral-800 bg-neutral-900 p-4">
         <div className="flex items-center justify-between pb-2">
-          <h2 className="truncate text-xs font-mono text-neutral-400">{currentPath ?? 'Loading…'}</h2>
+          <h2 className="truncate text-xs font-mono text-neutral-400">
+            {currentPath ?? 'Loading…'}
+          </h2>
           <button onClick={onClose} className="shrink-0 text-neutral-500 hover:text-neutral-200">
             ×
           </button>
@@ -105,7 +108,9 @@ export function RemoteFileBrowserModal({
                 ) : (
                   <File size={12} className="shrink-0 text-neutral-400" />
                 )}
-                <span className={`truncate ${entry.isHidden ? 'text-neutral-500' : 'text-neutral-200'}`}>
+                <span
+                  className={`truncate ${entry.isHidden ? 'text-neutral-500' : 'text-neutral-200'}`}
+                >
                   {entry.name}
                 </span>
               </button>

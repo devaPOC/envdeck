@@ -11,7 +11,13 @@ interface EnvSidePickerProps {
   onLoad: (serverId: string, path: string) => void
 }
 
-export function EnvSidePicker({ label, servers, loading, error, onLoad }: EnvSidePickerProps): JSX.Element {
+export function EnvSidePicker({
+  label,
+  servers,
+  loading,
+  error,
+  onLoad
+}: EnvSidePickerProps): JSX.Element {
   const [serverId, setServerId] = useState('')
   const [path, setPath] = useState('')
   const [browsing, setBrowsing] = useState(false)

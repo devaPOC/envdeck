@@ -36,6 +36,10 @@ export function MainPanel(): JSX.Element {
   activeFileRef.current = activeFile
   const modeRef = useRef(mode)
   modeRef.current = mode
+  const activeTerminalIdRef = useRef(activeTerminalId)
+  activeTerminalIdRef.current = activeTerminalId
+  const activeServerRef = useRef(activeServer)
+  activeServerRef.current = activeServer
 
   async function handleSave(file: OpenFile): Promise<void> {
     if (!file.isDirty) return
@@ -49,15 +53,40 @@ export function MainPanel(): JSX.Element {
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
-      const isSaveShortcut = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's'
-      if (!isSaveShortcut) return
-      if (modeRef.current !== 'file' || !activeFileRef.current) return
-      e.preventDefault()
-      void handleSave(activeFileRef.current)
+      if (!e.metaKey && !e.ctrlKey) return
+      const key = e.key.toLowerCase()
+
+      if (key === 's') {
+        if (modeRef.current !== 'file' || !activeFileRef.current) return
+        e.preventDefault()
+        void handleSave(activeFileRef.current)
+        return
+      }
+
+      if (key === 'w') {
+        if (modeRef.current === 'file' && activeFileRef.current) {
+          e.preventDefault()
+          const file = activeFileRef.current
+          if (file.isDirty) setClosingFile(file)
+          else closeFile(file.id)
+        } else if (modeRef.current === 'terminal' && activeTerminalIdRef.current) {
+          e.preventDefault()
+          removeTerminalSession(activeTerminalIdRef.current)
+        }
+        return
+      }
+
+      if (key === 't') {
+        const server = activeServerRef.current
+        if (!server || server.status !== 'connected') return
+        e.preventDefault()
+        addTerminalSession({ id: crypto.randomUUID(), serverId: server.id, title: server.name })
+        setMode('terminal')
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [closeFile, removeTerminalSession, addTerminalSession])
 
   function handleCloseFileRequest(file: OpenFile): void {
     if (file.isDirty) {
@@ -162,7 +191,9 @@ export function MainPanel(): JSX.Element {
           <div
             key={term.id}
             className="absolute inset-0"
-            style={{ display: mode === 'terminal' && activeTerminalId === term.id ? 'block' : 'none' }}
+            style={{
+              display: mode === 'terminal' && activeTerminalId === term.id ? 'block' : 'none'
+            }}
           >
             <Terminal session={term} />
           </div>

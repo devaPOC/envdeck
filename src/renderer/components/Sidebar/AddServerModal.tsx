@@ -35,7 +35,11 @@ export function AddServerModal({ initial, onSave, onClose }: AddServerModalProps
     try {
       await onSave({ name, host, username, pemKey })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save server — check the details and try again.')
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not save server — check the details and try again.'
+      )
     } finally {
       setSaving(false)
     }

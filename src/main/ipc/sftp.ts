@@ -8,15 +8,34 @@ export interface SftpEntry {
   size: number
   permissions: string
   isHidden: boolean
+  modifiedAt: number
 }
 
+// One SFTP channel per server connection, reused across every operation.
+// Opening a channel costs a round trip for the SSH subsystem request plus
+// another for the SFTP INIT/VERSION handshake — paying that on every single
+// file click, folder expand, or save made the app feel slow over any real
+// network latency.
+const sftpChannels = new Map<string, SFTPWrapper>()
+
 function openSftp(serverId: string): Promise<SFTPWrapper> {
+  const cached = sftpChannels.get(serverId)
+  if (cached) return Promise.resolve(cached)
+
   const client = getConnection(serverId)
   if (!client) return Promise.reject(new Error('Not connected to this server'))
+
   return new Promise((resolve, reject) => {
     client.sftp((err, sftp) => {
-      if (err) reject(err)
-      else resolve(sftp)
+      if (err) {
+        reject(err)
+        return
+      }
+      sftpChannels.set(serverId, sftp)
+      sftp.on('close', () => {
+        if (sftpChannels.get(serverId) === sftp) sftpChannels.delete(serverId)
+      })
+      resolve(sftp)
     })
   })
 }
@@ -33,7 +52,9 @@ function toSftpEntry(entry: FileEntryWithStats): SftpEntry {
     type: entry.attrs.isDirectory() ? 'directory' : 'file',
     size: entry.attrs.size,
     permissions: formatPermissions(entry.attrs.mode),
-    isHidden: entry.filename.startsWith('.')
+    isHidden: entry.filename.startsWith('.'),
+    // ssh2 reports mtime in seconds since epoch; JS Date wants milliseconds.
+    modifiedAt: entry.attrs.mtime * 1000
   }
 }
 
@@ -93,6 +114,16 @@ export function registerSftpHandlers(): void {
       const sftp = await openSftp(serverId)
       return new Promise((resolve, reject) => {
         sftp.rename(oldPath, newPath, (err) => (err ? reject(err) : resolve()))
+      })
+    }
+  )
+
+  ipcMain.handle(
+    'sftp:mkdir',
+    async (_event, serverId: string, remotePath: string): Promise<void> => {
+      const sftp = await openSftp(serverId)
+      return new Promise((resolve, reject) => {
+        sftp.mkdir(remotePath, (err) => (err ? reject(err) : resolve()))
       })
     }
   )
