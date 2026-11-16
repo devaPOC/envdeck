@@ -139,7 +139,7 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 - [x] `6.8` Handle "Docker not installed" gracefully — exit code 127 or a "command not found" stderr match surfaces a friendly message instead of a raw error
 
 **Branch:** `feat/docker-panel`
-**Note:** All three handlers run through a new `execCommand` helper exported from `ssh.ts` (also used to finally implement the `ssh:exec` IPC channel that had been a stub since the original scaffold) — reuses the existing SSH connection, no new one opened. `DockerPanel` gates on the server's connection status the same way `FileTree` does (shows "Connect to this server…" and doesn't poll while disconnected). Typechecks/lints clean; confirmed both `npm run dev` and a production `electron-vite build` succeed. Not yet manually verified against a real server with actual containers — please test the container list, start/stop/restart, viewing logs, and a server without Docker installed before merging.
+**Note:** All three handlers run through a new `execCommand` helper exported from `ssh.ts` (also used to finally implement the `ssh:exec` IPC channel that had been a stub since the original scaffold) — reuses the existing SSH connection, no new one opened. `DockerPanel` gates on the server's connection status the same way `FileTree` does (shows "Connect to this server…" and doesn't poll while disconnected). The logs modal fetches the full log once and paginates it 100 lines at a time client-side (Previous/Next), rather than re-fetching over SSH on every page turn. Verified against a real server: container list, start/stop/restart, logs pagination, and the no-Docker-installed case all confirmed working.
 **Done when:** You can see all containers, restart one, and read its logs — without touching the terminal.
 
 ---
@@ -187,7 +187,7 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 | 3 — File Tree | `[x]` | `feat/file-tree` | Verified against a real server; merged to `main` |
 | 4 — File Editor | `[x]` | `feat/file-editor` | Verified against a real server; merged to `main` |
 | 5 — Terminal | `[x]` | `feat/terminal` | Verified against a real server; merged to `main` |
-| 6 — Docker Panel | `[~]` | `feat/docker-panel` | Built; needs manual verify against a real server |
+| 6 — Docker Panel | `[x]` | `feat/docker-panel` | Verified against a real server; merged to `main` |
 | 7 — Env Diff | `[ ]` | `feat/env-diff` | |
 | 8 — Polish | `[ ]` | `chore/release-v1` | |
 
