@@ -104,14 +104,49 @@ export function registerSshHandlers(): void {
     broadcastStatus(serverId, 'disconnected')
   })
 
-  ipcMain.handle('ssh:exec', async (_event, _serverId: string, _command: string) => {
-    // TODO: run command over existing connection, return stdout/stderr
-    throw new Error('Not implemented')
-  })
+  ipcMain.handle(
+    'ssh:exec',
+    async (_event, serverId: string, command: string): Promise<ExecResult> =>
+      execCommand(serverId, command)
+  )
 }
 
 export function getConnection(serverId: string): Client | undefined {
   return connections.get(serverId)
+}
+
+export interface ExecResult {
+  stdout: string
+  stderr: string
+  code: number | null
+}
+
+export function execCommand(serverId: string, command: string): Promise<ExecResult> {
+  const client = connections.get(serverId)
+  if (!client) return Promise.reject(new Error('Not connected to this server'))
+
+  return new Promise((resolve, reject) => {
+    client.exec(command, (err, stream) => {
+      if (err) {
+        reject(err)
+        return
+      }
+
+      let stdout = ''
+      let stderr = ''
+
+      stream.on('data', (chunk: Buffer) => {
+        stdout += chunk.toString('utf-8')
+      })
+      stream.stderr.on('data', (chunk: Buffer) => {
+        stderr += chunk.toString('utf-8')
+      })
+      stream.on('error', reject)
+      stream.on('close', (code: number | null) => {
+        resolve({ stdout, stderr, code })
+      })
+    })
+  })
 }
 
 export function disconnectAllSsh(): void {
