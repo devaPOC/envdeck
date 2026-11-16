@@ -39,6 +39,17 @@ export interface TerminalClosedPayload {
   terminalId: string
 }
 
+export type DockerAction = 'start' | 'stop' | 'restart'
+
+export interface DockerContainer {
+  id: string
+  name: string
+  image: string
+  status: string
+  ports: string
+  running: boolean
+}
+
 const electronAPI = {
   servers: {
     list: (): Promise<ServerRecord[]> => ipcRenderer.invoke('servers:list'),
@@ -93,13 +104,11 @@ const electronAPI = {
     }
   },
   docker: {
-    listContainers: (serverId: string) => ipcRenderer.invoke('docker:listContainers', serverId),
-    start: (serverId: string, containerId: string) =>
-      ipcRenderer.invoke('docker:start', serverId, containerId),
-    stop: (serverId: string, containerId: string) =>
-      ipcRenderer.invoke('docker:stop', serverId, containerId),
-    restart: (serverId: string, containerId: string) =>
-      ipcRenderer.invoke('docker:restart', serverId, containerId)
+    list: (serverId: string): Promise<DockerContainer[]> => ipcRenderer.invoke('docker:list', serverId),
+    action: (serverId: string, containerId: string, action: DockerAction): Promise<void> =>
+      ipcRenderer.invoke('docker:action', serverId, containerId, action),
+    logs: (serverId: string, containerId: string, tailLines?: number): Promise<string> =>
+      ipcRenderer.invoke('docker:logs', serverId, containerId, tailLines)
   }
 }
 

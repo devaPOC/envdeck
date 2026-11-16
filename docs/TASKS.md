@@ -129,16 +129,17 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 
 > See and manage Docker containers on the remote server.
 
-- [ ] `6.1` IPC handler: `docker:list` — runs `docker ps -a --format json` over SSH, parses output
-- [ ] `6.2` IPC handler: `docker:action` — runs `docker start|stop|restart <id>` over SSH
-- [ ] `6.3` IPC handler: `docker:logs` — runs `docker logs --tail 100 <id>` over SSH
-- [ ] `6.4` Build `DockerPanel` component — table of containers with name, image, status, ports
-- [ ] `6.5` Start / Stop / Restart buttons per container
-- [ ] `6.6` Click container to view last 100 log lines
-- [ ] `6.7` Auto-refresh container list every 10 seconds
-- [ ] `6.8` Handle "Docker not installed" gracefully
+- [x] `6.1` IPC handler: `docker:list` — runs `docker ps -a --format '{{json .}}'` over SSH (one JSON object per line; `--format json` isn't valid docker syntax), parses output
+- [x] `6.2` IPC handler: `docker:action` — runs `docker start|stop|restart <id>` over SSH, with the action restricted to a literal union and the container id validated against a strict pattern before it ever reaches a shell command string
+- [x] `6.3` IPC handler: `docker:logs` — runs `docker logs --tail 100 <id> 2>&1` over SSH (stderr redirected server-side so output stays in one ordered stream)
+- [x] `6.4` Build `DockerPanel` component — card list (not a literal `<table>`, to fit the 320px right-panel width) with name, image, status, ports
+- [x] `6.5` Start / Stop / Restart buttons per container
+- [x] `6.6` Click container to view last 100 log lines — opens `DockerLogsModal`, which fetches the full log once (`docker logs` with no `--tail`) and paginates it 100 lines at a time client-side, so Previous/Next don't re-run anything over SSH
+- [x] `6.7` Auto-refresh container list every 10 seconds (only while the server is connected)
+- [x] `6.8` Handle "Docker not installed" gracefully — exit code 127 or a "command not found" stderr match surfaces a friendly message instead of a raw error
 
 **Branch:** `feat/docker-panel`
+**Note:** All three handlers run through a new `execCommand` helper exported from `ssh.ts` (also used to finally implement the `ssh:exec` IPC channel that had been a stub since the original scaffold) — reuses the existing SSH connection, no new one opened. `DockerPanel` gates on the server's connection status the same way `FileTree` does (shows "Connect to this server…" and doesn't poll while disconnected). The logs modal fetches the full log once and paginates it 100 lines at a time client-side (Previous/Next), rather than re-fetching over SSH on every page turn. Verified against a real server: container list, start/stop/restart, logs pagination, and the no-Docker-installed case all confirmed working.
 **Done when:** You can see all containers, restart one, and read its logs — without touching the terminal.
 
 ---
@@ -186,7 +187,7 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 | 3 — File Tree | `[x]` | `feat/file-tree` | Verified against a real server; merged to `main` |
 | 4 — File Editor | `[x]` | `feat/file-editor` | Verified against a real server; merged to `main` |
 | 5 — Terminal | `[x]` | `feat/terminal` | Verified against a real server; merged to `main` |
-| 6 — Docker Panel | `[ ]` | `feat/docker-panel` | |
+| 6 — Docker Panel | `[x]` | `feat/docker-panel` | Verified against a real server; merged to `main` |
 | 7 — Env Diff | `[ ]` | `feat/env-diff` | |
 | 8 — Polish | `[ ]` | `chore/release-v1` | |
 
