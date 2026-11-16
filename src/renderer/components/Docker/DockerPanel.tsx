@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react'
 import { FileText, Play, RotateCw, Square } from 'lucide-react'
 import { useServerStore } from '../../store/serverStore'
 import { DockerLogsModal } from './DockerLogsModal'
+import { ConfirmDialog } from '../ConfirmDialog'
+
+type DockerActionKind = 'start' | 'stop' | 'restart'
+
+// Stopping/restarting a container is disruptive enough to confirm first;
+// starting a stopped one isn't.
+const ACTIONS_NEEDING_CONFIRM: DockerActionKind[] = ['stop', 'restart']
 
 export interface DockerContainer {
   id: string
@@ -21,6 +28,10 @@ export function DockerPanel({ serverId }: { serverId: string }): JSX.Element {
   const [actionError, setActionError] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [viewingLogsFor, setViewingLogsFor] = useState<DockerContainer | null>(null)
+  const [confirmingAction, setConfirmingAction] = useState<{
+    container: DockerContainer
+    action: DockerActionKind
+  } | null>(null)
 
   async function refresh(): Promise<void> {
     try {
@@ -46,10 +57,7 @@ export function DockerPanel({ serverId }: { serverId: string }): JSX.Element {
     return () => clearInterval(interval)
   }, [serverId, status])
 
-  async function handleAction(
-    container: DockerContainer,
-    action: 'start' | 'stop' | 'restart'
-  ): Promise<void> {
+  async function handleAction(container: DockerContainer, action: DockerActionKind): Promise<void> {
     setPendingId(container.id)
     setActionError(null)
     try {
@@ -59,6 +67,14 @@ export function DockerPanel({ serverId }: { serverId: string }): JSX.Element {
       setActionError(err instanceof Error ? err.message : `Could not ${action} container`)
     } finally {
       setPendingId(null)
+    }
+  }
+
+  function requestAction(container: DockerContainer, action: DockerActionKind): void {
+    if (ACTIONS_NEEDING_CONFIRM.includes(action)) {
+      setConfirmingAction({ container, action })
+    } else {
+      void handleAction(container, action)
     }
   }
 
@@ -110,7 +126,7 @@ export function DockerPanel({ serverId }: { serverId: string }): JSX.Element {
               {container.running ? (
                 <button
                   disabled={isPending}
-                  onClick={() => void handleAction(container, 'stop')}
+                  onClick={() => requestAction(container, 'stop')}
                   className="flex items-center gap-1 rounded px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-800 disabled:opacity-40"
                 >
                   <Square size={12} /> Stop
@@ -118,7 +134,7 @@ export function DockerPanel({ serverId }: { serverId: string }): JSX.Element {
               ) : (
                 <button
                   disabled={isPending}
-                  onClick={() => void handleAction(container, 'start')}
+                  onClick={() => requestAction(container, 'start')}
                   className="flex items-center gap-1 rounded px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-800 disabled:opacity-40"
                 >
                   <Play size={12} /> Start
@@ -126,7 +142,7 @@ export function DockerPanel({ serverId }: { serverId: string }): JSX.Element {
               )}
               <button
                 disabled={isPending}
-                onClick={() => void handleAction(container, 'restart')}
+                onClick={() => requestAction(container, 'restart')}
                 className="flex items-center gap-1 rounded px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-800 disabled:opacity-40"
               >
                 <RotateCw size={12} /> Restart
@@ -147,6 +163,19 @@ export function DockerPanel({ serverId }: { serverId: string }): JSX.Element {
           serverId={serverId}
           container={viewingLogsFor}
           onClose={() => setViewingLogsFor(null)}
+        />
+      )}
+
+      {confirmingAction && (
+        <ConfirmDialog
+          title={confirmingAction.action === 'stop' ? 'Stop container' : 'Restart container'}
+          message={`${confirmingAction.action === 'stop' ? 'Stop' : 'Restart'} "${confirmingAction.container.name}"?`}
+          confirmLabel={confirmingAction.action === 'stop' ? 'Stop' : 'Restart'}
+          onConfirm={() => {
+            void handleAction(confirmingAction.container, confirmingAction.action)
+            setConfirmingAction(null)
+          }}
+          onCancel={() => setConfirmingAction(null)}
         />
       )}
     </div>

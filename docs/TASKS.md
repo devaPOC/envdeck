@@ -133,7 +133,7 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 - [x] `6.2` IPC handler: `docker:action` — runs `docker start|stop|restart <id>` over SSH, with the action restricted to a literal union and the container id validated against a strict pattern before it ever reaches a shell command string
 - [x] `6.3` IPC handler: `docker:logs` — runs `docker logs --tail 100 <id> 2>&1` over SSH (stderr redirected server-side so output stays in one ordered stream)
 - [x] `6.4` Build `DockerPanel` component — card list (not a literal `<table>`, to fit the 320px right-panel width) with name, image, status, ports
-- [x] `6.5` Start / Stop / Restart buttons per container
+- [x] `6.5` Start / Stop / Restart buttons per container — Stop/Restart confirm first via `ConfirmDialog` (per CLAUDE.md's "destructive actions require confirmation" rule); Start doesn't, since it's not destructive
 - [x] `6.6` Click container to view last 100 log lines — opens `DockerLogsModal`, which fetches the full log once (`docker logs` with no `--tail`) and paginates it 100 lines at a time client-side, so Previous/Next don't re-run anything over SSH
 - [x] `6.7` Auto-refresh container list every 10 seconds (only while the server is connected)
 - [x] `6.8` Handle "Docker not installed" gracefully — exit code 127 or a "command not found" stderr match surfaces a friendly message instead of a raw error
