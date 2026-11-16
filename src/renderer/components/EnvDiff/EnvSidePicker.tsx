@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { FolderOpen } from 'lucide-react'
 import type { Server } from '../../store/serverStore'
+import { RemoteFileBrowserModal } from './RemoteFileBrowserModal'
 
 interface EnvSidePickerProps {
   label: string
@@ -12,6 +14,7 @@ interface EnvSidePickerProps {
 export function EnvSidePicker({ label, servers, loading, error, onLoad }: EnvSidePickerProps): JSX.Element {
   const [serverId, setServerId] = useState('')
   const [path, setPath] = useState('')
+  const [browsing, setBrowsing] = useState(false)
 
   return (
     <div className="flex flex-col gap-1 rounded border border-neutral-800 p-2">
@@ -28,12 +31,22 @@ export function EnvSidePicker({ label, servers, loading, error, onLoad }: EnvSid
           </option>
         ))}
       </select>
-      <input
-        value={path}
-        onChange={(e) => setPath(e.target.value)}
-        placeholder="/path/to/.env"
-        className="rounded border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100"
-      />
+      <div className="flex gap-1">
+        <input
+          value={path}
+          onChange={(e) => setPath(e.target.value)}
+          placeholder="/path/to/.env"
+          className="flex-1 rounded border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100"
+        />
+        <button
+          disabled={!serverId}
+          onClick={() => setBrowsing(true)}
+          title="Browse files"
+          className="shrink-0 rounded border border-neutral-700 px-2 text-neutral-300 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <FolderOpen size={14} />
+        </button>
+      </div>
       <button
         disabled={!serverId || !path || loading}
         onClick={() => onLoad(serverId, path)}
@@ -42,6 +55,18 @@ export function EnvSidePicker({ label, servers, loading, error, onLoad }: EnvSid
         {loading ? 'Loading…' : 'Load'}
       </button>
       {error && <p className="text-xs text-red-400">{error}</p>}
+
+      {browsing && serverId && (
+        <RemoteFileBrowserModal
+          serverId={serverId}
+          onSelect={(selectedPath) => {
+            setPath(selectedPath)
+            setBrowsing(false)
+            onLoad(serverId, selectedPath)
+          }}
+          onClose={() => setBrowsing(false)}
+        />
+      )}
     </div>
   )
 }

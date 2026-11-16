@@ -149,7 +149,7 @@ Verified against a real server, including multiple concurrent terminal tabs. Fou
 > Compare `.env` files between two servers side by side.
 
 - [x] `7.1` Build `EnvDiff` component — stacked (not literal side-by-side columns; see note) picker sections, diff rows below
-- [x] `7.2` Server A picker (server + file path), Server B picker (server + file path)
+- [x] `7.2` Server A picker (server + file path), Server B picker (server + file path) — each has a Browse button opening a small remote file navigator (reuses `sftp.home`/`sftp.listDir`) instead of requiring a hand-typed absolute path; picking a file auto-loads it. Comparing two files on the *same* server works the same way — just pick that server for both sides.
 - [x] `7.3` Fetch both files via `sftp:readFile` (reuses the handler from Phase 3/4, not a separate `sftp:readfile` channel)
 - [x] `7.4` Parse `.env` file into key-value pairs — `envParser.ts`, skips blank lines/comments, keeps each key's line index so edits land back on the right line
 - [x] `7.5` Highlight: keys only in A (red), keys only in B (blue), keys with different values (yellow), matching keys (green)
